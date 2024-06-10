@@ -1,0 +1,9 @@
+.idea/
+composer.lock
+vendor/
+bin/*
+metrics/*
+*.iml
+*.log
+/nbproject/private/
+/.php-cs-fixer.cache
