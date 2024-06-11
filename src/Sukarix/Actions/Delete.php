@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Sukarix\Actions;
 
-use Nette\Utils\Strings;
 use Sukarix\Enum\ResponseCode;
 use Sukarix\Models\Model;
 
@@ -51,7 +50,7 @@ abstract class Delete extends WebAction
         $this->recordId = $params['id'];
 
         if (null === $this->model) {
-            $this->model = $f3->camelcase(Strings::capitalize(str_replace('-', '_', Strings::before($f3->get('ALIAS'), '_delete'))));
+            $this->model = $f3->camelcase(mb_convert_case(str_replace('-', '_', mb_strstr($f3->get('ALIAS'), '_delete', true)), MB_CASE_TITLE, 'UTF-8'));
         }
 
         $this->modelClass    = new \ReflectionClass("Models\\{$this->model}");
@@ -69,7 +68,7 @@ abstract class Delete extends WebAction
 
                 if (null !== $this->messageArg) {
                     $message  = $this->i18n->msg(mb_strtolower($this->model) . '.delete_success');
-                    $argument = str_starts_with($message, '{0}') ? Strings::capitalize($this->modelInstance[$this->messageArg]) : $this->modelInstance[$this->messageArg];
+                    $argument = str_starts_with($message, '{0}') ? mb_convert_case($this->modelInstance[$this->messageArg], MB_CASE_TITLE, 'UTF-8') : $this->modelInstance[$this->messageArg];
                 }
             }
         } else {

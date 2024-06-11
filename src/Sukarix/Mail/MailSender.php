@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Sukarix\Mail;
 
-use Nette\Utils\Strings;
 use Sukarix\Behaviours\HasF3;
 use Sukarix\Behaviours\LogWriter;
 use Sukarix\Configuration\Environment;
@@ -50,7 +49,7 @@ class MailSender extends Tailored
     {
         $messageId         = $this->generateId();
         $vars['date']      = date('%A %d %B %A à %T');
-        $vars['messageId'] = Strings::before(mb_substr($messageId, 1, -1), '@');
+        $vars['messageId'] = mb_strstr(mb_substr($messageId, 1, -1), '@', true);
         $vars['SCHEME']    = $this->f3->get('SCHEME');
         $vars['HOST']      = Environment::getHostName();
         $vars['PORT']      = $this->f3->get('PORT');
