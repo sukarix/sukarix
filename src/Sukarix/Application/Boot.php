@@ -126,7 +126,7 @@ abstract class Boot
         }
     }
 
-    abstract protected function loadRoutesAndAssets();
+    abstract protected function loadRoutesAndAccess();
 
     protected function logPerformanceMetrics(): void
     {

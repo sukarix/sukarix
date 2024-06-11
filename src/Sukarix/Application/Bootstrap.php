@@ -32,7 +32,7 @@ class Bootstrap extends Boot
         $this->prepareSession();
         $this->loadAppSetting();
         $this->detectCli();
-        $this->loadRoutesAndAssets();
+        $this->loadRoutesAndAccess();
     }
 
     protected function loadConfiguration(): void
@@ -94,7 +94,7 @@ class Bootstrap extends Boot
         $this->f3->set('LANGUAGE', $this->session->get('locale'));
     }
 
-    protected function loadRoutesAndAssets(): void
+    protected function loadRoutesAndAccess(): void
     {
         // setup routes
         // @see http://fatfreeframework.com/routing-engine
