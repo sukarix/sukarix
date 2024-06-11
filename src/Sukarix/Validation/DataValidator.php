@@ -14,7 +14,7 @@ class DataValidator
 {
     private array $errors;
 
-    public function verify($input, Validatable $validator): bool
+    public function verify($input, Validatable $validator, bool $throwOnFail = false): bool
     {
         if (null !== $validator->getName()) {
             $validationException = null;
@@ -22,6 +22,9 @@ class DataValidator
             try {
                 $validator->assert($input);
             } catch (NestedValidationException $exception) {
+                if ($throwOnFail) {
+                    throw $exception;
+                }
                 $validationException = $exception;
             }
 

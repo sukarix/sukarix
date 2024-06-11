@@ -61,7 +61,7 @@ class Assets extends Helper
     {
         $filePath = '/css/' . $filePath;
         if (false === mb_stripos($filePath, 'http')) {
-            $this->validator->verify($this->f3->get('ROOT') . $filePath, Validator::exists()->setName('css_exist'));
+            $this->validator->verify($this->f3->get('ROOT') . $filePath, Validator::exists()->setName('css_exist'), true);
         }
         $idTag = $id ? 'id="' . $id . '"' : '';
         if (true === $this->f3->get('MINIFY_CSS') && false === mb_stripos($filePath, 'http') && !str_contains($filePath, '.min.')) {
@@ -119,7 +119,7 @@ class Assets extends Helper
         if (true === $this->f3->get('MINIFY_JS') && !str_contains($filePath, '.min.')) {
             $jsTag = '<script src="/minified/' . $this->minifyJavaScript($filePath, mb_stripos($filePath, '.min.')) . '" type="text/javascript"></script>' . "\n";
         } else {
-            $this->validator->verify($this->f3->get('ROOT') . $filePath, Validator::exists()->setName('js_exist'));
+            $this->validator->verify($this->f3->get('ROOT') . $filePath, Validator::exists()->setName('js_exist'), true);
             $jsTag = '<script src="' . $filePath . '" type="text/javascript"></script>' . "\n";
         }
 
