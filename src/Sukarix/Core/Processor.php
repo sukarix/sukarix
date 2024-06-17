@@ -8,12 +8,8 @@ class Processor extends \Prefab
 {
     public function initialize($object)
     {
-        $traits = $this->getAllTraits($object);
-
-        foreach ($traits as $trait) {
-            $traitName  = (new \ReflectionClass($trait))->getShortName();
-            $methodName = 'init' . $traitName;
-
+        foreach ($this->getAllTraits($object) as $trait) {
+            $methodName = 'init' . (new \ReflectionClass($trait))->getShortName();
             if (method_exists($object, $methodName)) {
                 $object->{$methodName}();
             }
@@ -22,30 +18,17 @@ class Processor extends \Prefab
 
     private function getAllTraits($object): array
     {
-        $traits       = [];
-        $currentClass = \get_class($object);
+        do {
+            $traits = array_merge($traits ?? [], class_uses($class ?? \get_class($object)));
+        } while ($class = get_parent_class($class ?? $object));
 
-        while ($currentClass) {
-            $traits       = array_merge($traits, class_uses($currentClass));
-            $currentClass = get_parent_class($currentClass);
-        }
-
-        // Also get traits used by the traits
-        $traits = array_merge($traits, $this->getTraitsFromTraits($traits));
-
-        return array_unique($traits);
+        return array_unique(array_merge($traits, $this->getTraitsFromTraits($traits)));
     }
 
     private function getTraitsFromTraits(array $traits): array
     {
-        $allTraits = [];
-
-        foreach ($traits as $trait) {
-            $traitUses = class_uses($trait);
-            $allTraits = array_merge($allTraits, $traitUses);
-            $allTraits = array_merge($allTraits, $this->getTraitsFromTraits($traitUses));
-        }
-
-        return $allTraits;
+        return array_reduce($traits, function($carry, $trait) {
+            return array_merge($carry, class_uses($trait), $this->getTraitsFromTraits(class_uses($trait)));
+        }, []);
     }
 }
