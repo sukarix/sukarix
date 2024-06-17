@@ -61,7 +61,7 @@
         "respect/validation": "^2.3.7",
         "robmorgan/phinx": "^0.16.1",
         "tracy/tracy": "^v2.10.7",
-        "xfra35/f3-access": "^1.2.2"
+        "sukarix/f3-access": "^1.2.3"
     },
     "require-dev": {
         "ext-xdebug": "*",
@@ -107,5 +107,6 @@
         "psalm": "./vendor/bin/psalm --threads=8 --diff"
     },
     "suggest": {
+        "ikkez/f3-middleware": "A middleware router plugin for PHP Fat-Free Framework"
     }
 }
