@@ -106,9 +106,10 @@ abstract class Action extends Tailored
         if (null === $view) {
             $view = str_replace(['actions\_', '\_'], ['', '/'], $this->f3->snakecase(static::class));
         }
+
         $this->f3->set('view', $this->setView($view));
         if (null === $template) {
-            $template = $this->view ?: $this->f3->get('view.default');
+            $template = $this->view ?: $this->f3->get('template.default');
         }
         // This required to register the template extensions before rendering it
         // We do it at this time because we are sure that we want to render starting from here
