@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Skuarix\Actions\Jobs;
+namespace Sukarix\Actions\Jobs;
 
 use GO\Scheduler;
 use Sukarix\Actions\Action;
