@@ -144,7 +144,7 @@ class Assets extends Helper
                 $css->minify($filePath);
                 $this->logger->debug('Minified JS file "' . $file . '" to "' . $filePath . '"');
             } else {
-                copy($this->f3->f3['ROOT'] . $file, $filePath);
+                copy($this->f3['ROOT'] . $file, $filePath);
                 $this->logger->debug('Copied JS file "' . $file . '" to "' . $filePath . '"');
             }
         }
@@ -197,7 +197,7 @@ class Assets extends Helper
      * Minifies a CSS file if not minified yet and returns its new minified path.
      *
      * @param string $file CSS file path
-     * @param        $copy bool Just copy the file to the minifcation folder instead of minifying it
+     * @param        $copy bool Just copy the file to the minification folder instead of minifying it
      *
      * @return string new minified CSS path
      */
