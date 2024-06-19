@@ -51,7 +51,6 @@ class Notifier extends Tailored
         return \Web::instance()->request(rtrim($this->f3->get('NOTIFICATIONS.zulip.uri'), '/') . '/api/v1/messages', [
             'method' => 'POST',
             'header' => [
-                'Content-Type: application/x-www-form-urlencoded',
                 'Authorization: Basic ' . base64_encode($this->f3->get('NOTIFICATIONS.zulip.mail') . ':' . $this->f3->get('NOTIFICATIONS.zulip.token')),
             ],
             'content' => http_build_query(array_merge([
