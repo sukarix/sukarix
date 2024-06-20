@@ -1,51 +1,49 @@
 name: Bug Report
 description: Report an issue with Sukarix.
 body:
-    - type: markdown
-      attributes:
-          value: >-
-              Please read [our full contribution
-              guide](https://sukarix.com/docs/community/contributing.html) before
-              submitting bug reports.
-    - type: input
-      attributes:
-          label: Sukarix Version
-          description: Provide the Sukarix version you are using.
-          placeholder: 0.1.0
-      validations:
-          required: true
-    - type: input
-      attributes:
-          label: PHP Version
-          description: Provide the PHP version you are using.
-          placeholder: 8.2.0
-      validations:
-          required: true
-    - type: textarea
-      attributes:
-          label: Description
-          description: Provide a detailed description of the issue you are facing.
-      validations:
-          required: true
-    - type: textarea
-      attributes:
-          label: Steps To Reproduce
-          description: Provide detailed steps to reproduce your issue.
-      validations:
-          required: true
-    - type: textarea
-      attributes:
-          label: Possible Solution
-          description:
-              Optional: suggestions on a fix or reason for the bug.
-      validations:
-          required: false
-    - type: textarea
-      attributes:
-          label: Additional Context
-          description:
-              Optional: >-
-                  any other context about the problem, such as log messages or
-                  screenshots.
-      validations:
-          required: false
+  - type: markdown
+    attributes:
+      value: >
+        Please read [our full contribution guide](https://sukarix.com/docs/community/contributing.html) before submitting bug reports.
+  - type: input
+    attributes:
+      label: Sukarix Version
+      description: Provide the Sukarix version you are using.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: PHP Version
+      description: Provide the PHP version you are using.
+      placeholder: 8.2.0
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Description
+      description: Provide a detailed description of the issue you are facing.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps To Reproduce
+      description: Provide detailed steps to reproduce your issue.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Possible Solution
+      description: >
+        Optional: suggestions on a fix or reason for the bug.
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Additional Context
+      description: >
+        Optional: 
+        any other context about the problem, such as log messages or
+        screenshots.
+    validations:
+      required: false
