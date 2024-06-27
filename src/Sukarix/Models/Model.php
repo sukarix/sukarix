@@ -150,23 +150,63 @@ abstract class Model extends Cortex
         }
     }
 
+    /**
+     * Converts a PHP array to a PostgreSQL array format.
+     *
+     * Handles multidimensional arrays, escaping each element with `pg_escape_string`.
+     * - Strings are enclosed in single quotes, numeric values are not.
+     * - Special values like PHP `NULL` and booleans are converted to PostgreSQL `NULL`, `TRUE`, and `FALSE`.
+     * - Supports scalar and multidimensional arrays.
+     *
+     * Examples:
+     * - String array: `['a', 'b', 'c']` => `{'a','b','c'}`
+     * - Numeric array: `[1, 2, 3]` => `{1,2,3}`
+     * - Boolean array: `[true, false]` => `{TRUE,FALSE}`
+     * - Multidimensional array: `[['a', 'b'], ['c', 'd']]` => `{{'a','b'},{'c','d'}}`
+     * - Empty array: `[]` => `{}`
+     * - Null value: `null` => `NULL`
+     *
+     * Use the result directly in queries; do not quote or escape it further.
+     * Do not use as a parameter for prepared statements.
+     * Specify array type in queries to avoid errors with empty or null arrays.
+     *
+     * Example usage:
+     * ```php
+     * $query = 'INSERT INTO foo (field1, field_array) VALUES ($1, ' . toPostgreSqlArray($phpArray) . '::varchar[])';
+     * $params = ['scalar_parameter'];
+     * ```
+     *
+     * Note: The function ensures syntax correctness but does not perform type or logical checks.
+     *
+     * Inspired by: https://stackoverflow.com/a/24311189
+     *
+     * @param null|array $set Input PHP array
+     *
+     * @return string PostgreSQL array syntax
+     */
     protected function toPostgreSqlArray($set): string
     {
-        $set    = (array) $set;
+        if (null === $set || !\is_array($set)) {
+            return 'NULL';
+        }
+
+        $set    = (array) $set; // Ensure $set is an array
         $result = [];
 
         foreach ($set as $t) {
             if (\is_array($t)) {
-                $result[] = $this->toPostgreSqlArray($t);
+                $result[] = $this->toPostgreSqlArray($t); // Recursion for nested arrays
+            } elseif (null === $t) {
+                $result[] = 'NULL';
+            } elseif (\is_bool($t)) {
+                $result[] = $t ? 'TRUE' : 'FALSE';
             } else {
-                $t = str_replace('"', '\\"', $t); // escape double quote
-                if (!is_numeric($t)) { // quote only non-numeric values
-                    $t = '"' . $t . '"';
-                }
-                $result[] = $t;
+                // Escape and quote non-numeric values
+                $t        = pg_escape_string($t);
+                $result[] = is_numeric($t) ? $t : "'" . $t . "'";
             }
         }
 
-        return '{' . implode(',', $result) . '}'; // format
+        return sprintf('{%s}', implode(',', $result));
     }
 }
