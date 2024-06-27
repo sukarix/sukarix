@@ -17,7 +17,6 @@ use Sukarix\Core\Injector;
 use Sukarix\Core\Tailored;
 use Sukarix\Enum\UserRole;
 use Sukarix\Enum\UserStatus;
-use Sukarix\Helpers\Assets;
 use Sukarix\Models\User;
 
 /**
@@ -84,8 +83,7 @@ abstract class Action extends Tailored
         // Rerouted paged uri having the page value less than one
         if ($this->f3->exists('PARAMS.page') && $this->f3->get('PARAMS.page') < 1) {
             $uri = $this->f3->get('PATH');
-            $uri = preg_replace('/\/' . $this->f3->get('PARAMS.page') . '$/', '/1', $uri);
-            $this->f3->reroute($uri);
+            $this->f3->reroute(preg_replace('/\/' . $this->f3->get('PARAMS.page') . '$/', '/1', $uri));
         }
     }
 
@@ -96,9 +94,7 @@ abstract class Action extends Tailored
     }
 
     /**
-     * @param null   $template
-     * @param null   $view
-     * @param string $mime
+     * @throws \Exception
      */
     public function render($template = null, $view = null, $mime = 'text/html'): void
     {
@@ -167,20 +163,22 @@ abstract class Action extends Tailored
     }
 
     /**
-     * @param $xml SimpleXMLElement
+     * Render XML content, accepting either SimpleXMLElement or string.
+     *
+     * @param null|\SimpleXMLElement|string $xml
      */
-    public function renderRawXml($xml): void
+    public function renderXMLContent($xml = null): void
     {
         // Set the XML header
         header('Content-Type: text/xml; charset=UTF-8');
-        echo $xml->asXML();
-    }
 
-    public function renderXmlString($xml = null): void
-    {
-        header('Content-Type: text/xml; charset=UTF-8');
-
-        echo $xml;
+        if (\is_string($xml)) {
+            echo $xml;
+        } elseif ($xml instanceof \SimpleXMLElement) {
+            echo $xml->asXML();
+        } else {
+            throw new \InvalidArgumentException('Invalid XML input: must be SimpleXMLElement or string.');
+        }
     }
 
     /**
@@ -249,14 +247,37 @@ abstract class Action extends Tailored
 
     private function parseXMLView(?string $view = null): string
     {
-        $xmlResponse = new \SimpleXMLElement(\Template::instance()->render($this->view . '.xml'));
+        $xmlString = \Template::instance()->render($this->view . '.xml');
 
-        $xmlDocument                     = new \DOMDocument('1.0');
-        $xmlDocument->preserveWhiteSpace = false;
-        $xmlDocument->formatOutput       = true;
+        if (\extension_loaded('dom') && \extension_loaded('simplexml')) {
+            $xml                     = new \SimpleXMLElement($xmlString);
+            $dom                     = new \DOMDocument('1.0');
+            $dom->preserveWhiteSpace = false;
+            $dom->formatOutput       = true;
+            $dom->loadXML($xml->asXML());
 
-        $xmlDocument->loadXML($xmlResponse->asXML());
+            return $dom->saveXML();
+        }
 
-        return $xmlDocument->saveXML();
+        return $this->formatXmlString($xmlString);
+    }
+
+    private function formatXmlString(string $xml): string
+    {
+        $lines        = explode("\n", trim($xml));
+        $indent       = 0;
+        $formattedXml = '';
+
+        foreach ($lines as $line) {
+            if (preg_match('/^<\/\w/', $line)) {
+                --$indent;
+            }
+            $formattedXml .= str_repeat('    ', $indent) . $line . "\n";
+            if (preg_match('/^<\w[^>]*[^\/]>.*$/', $line)) {
+                ++$indent;
+            }
+        }
+
+        return $formattedXml;
     }
 }

@@ -9,12 +9,6 @@ namespace Sukarix\Actions;
  */
 abstract class WebAction extends Action
 {
-    public const JSON            = 'Content-Type: application/json; charset=utf-8';
-    public const APPLICATION_XML = 'Content-Type: application/xml; charset=UTF-8';
-    public const CSV             = 'Content-Type: text/csv; charset=UTF-8';
-    public const TEXT            = 'Content-Type: text/plain; charset=utf-8';
-    public const XML             = 'Content-Type: text/xml; charset=UTF-8';
-
     /**
      * f3 instance.
      *
