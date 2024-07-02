@@ -50,7 +50,8 @@
         "peppeocchi/php-cron-scheduler": "^v4.0",
         "respect/validation": "^2.3.7",
         "tracy/tracy": "^v2.10.7",
-        "sukarix/f3-access": "^1.2.3"
+        "sukarix/f3-access": "^1.2.3",
+        "xfra35/f3-multilang": "^1.3"
     },
     "require-dev": {
         "ext-xdebug": "*",

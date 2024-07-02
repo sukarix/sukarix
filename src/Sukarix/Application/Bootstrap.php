@@ -33,6 +33,7 @@ class Bootstrap extends Boot
         $this->loadAppSetting();
         $this->detectCli();
         $this->loadRoutesAndAccess();
+        $this->detectMultiLanguage();
     }
 
     protected function loadConfiguration(): void
@@ -110,5 +111,10 @@ class Bootstrap extends Boot
             // load routes access policy for CLI
             $this->f3->config('config/access-cli.ini');
         }
+    }
+
+    protected function detectMultiLanguage(): void
+    {
+        $this->f3->exists('MULTILANG.languages') && Injector::instance()->get('multi_language');
     }
 }
