@@ -6,7 +6,7 @@ namespace Sukarix\Core;
 
 use DB\SQL;
 use DB\SQL\Session as SQLSession;
-use Models\User;
+use Sukarix\Models\User;
 use Session as F3Session;
 use Sukarix\Behaviours\HasF3;
 use Sukarix\Behaviours\LogWriter;
