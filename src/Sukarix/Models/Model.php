@@ -58,6 +58,12 @@ abstract class Model extends Cortex
             }
         );
 
+        $this->afterinsert(
+            static function(self $self): void {
+                $self[$self->primary] = $self->mapper->get('_id');
+            }
+        );
+
         $this->beforeupdate(
             static function(self $self): void {
                 $self->setUpdatedOnDate();
