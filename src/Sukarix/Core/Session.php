@@ -6,19 +6,16 @@ namespace Sukarix\Core;
 
 use DB\SQL;
 use DB\SQL\Session as SQLSession;
-use Sukarix\Models\User;
 use Session as F3Session;
 use Sukarix\Behaviours\HasF3;
 use Sukarix\Behaviours\LogWriter;
+use Sukarix\Models\User;
 
 class Session extends Tailored
 {
     use HasF3;
     use LogWriter;
 
-    /**
-     * @var SQLSession
-     */
     protected $internalSession;
 
     /**
@@ -31,40 +28,7 @@ class Session extends Tailored
     public function __construct(?SQL $db = null, $table = 'sessions', $force = false, $key = null)
     {
         Processor::instance()->initialize($this);
-        if ('CACHE' === $table) {
-            $this->internalSession = new F3Session(
-                function(F3Session $session, $id) {
-                    // Suspect session
-                    if (($ip = $session->ip()) !== $this->f3->get('IP')) {
-                        $this->logger->warning('user changed IP:' . $ip);
-                    } else {
-                        $this->logger->warning('user changed browser/device:' . $this->f3->get('AGENT'));
-                    }
-
-                    // The default behaviour destroys the suspicious session.
-                    return true;
-                },
-                $key
-            );
-        } else {
-            $this->internalSession = new SQLSession(
-                $db,
-                $table,
-                $force,
-                function($session) {
-                    // Suspect session
-                    if (($ip = $session->ip()) !== $this->f3->get('IP')) {
-                        $this->logger->warning('user changed IP:' . $ip);
-                    } else {
-                        $this->logger->warning('user changed browser/device:' . $this->f3->get('AGENT'));
-                    }
-
-                    // The default behaviour destroys the suspicious session.
-                    return true;
-                },
-                $key
-            );
-        }
+        $this->initializeSession($db, $table, $force, $key);
     }
 
     public function cleanupOldSessions(): void
@@ -111,10 +75,7 @@ class Session extends Tailored
         return true === $this->get('user.loggedIn');
     }
 
-    /**
-     * @param $user User
-     */
-    public function authorizeUser($user): void
+    public function authorizeUser(User $user): void
     {
         $this->set('user.id', $user->id);
         $this->set('user.role', $user->role);
@@ -166,19 +127,14 @@ class Session extends Tailored
             return \in_array($this->getRole(), $role, true);
         }
 
-        // Log and handle incorrect type
         $this->logger->emergency('Cannot test user role on invalid object type', ['type' => \gettype($role)]);
 
-        // Optionally, you could throw an exception instead of just logging
         throw new \InvalidArgumentException('Role must be a string or an array');
     }
 
-    /**
-     * @return string
-     */
-    public function getType()
+    public function getType(): string
     {
-        return $this->get('user.type');
+        return $this->get('user.type') ?: '';
     }
 
     /**
@@ -191,16 +147,20 @@ class Session extends Tailored
         $token = $this->internalSession->csrf();
         $this->set('csrf_token', $token);
         $this->set('csrf_used', false);
+        $this->set('csrf_valid', true);
+        $this->set('csrf_expiry', time() + 3600);
 
         return $token;
     }
 
-    /**
-     * @return null|string
-     */
-    public function sid()
+    public function sid(): ?string
     {
         return $this->internalSession->sid();
+    }
+
+    public function isCsrfValid(): bool
+    {
+        return $this->get('csrf_valid');
     }
 
     /**
@@ -208,27 +168,66 @@ class Session extends Tailored
      *
      * @return bool
      */
-    public function validateToken()
+    public function validateToken(): bool
     {
-        $errors = [];
-        if (!$this->get('csrf_token') || $this->get('csrf_used')) {
-            $tokenIsValid = $errors['csrf_token'] = 'CSRF token used or not set';
+        $errors       = [];
+        $sessionToken = $this->get('csrf_token');
+        $csrfExpiry   = $this->get('csrf_expiry');
+
+        // Log the current csrf_used value for debugging
+        $this->logger->debug('CSRF used status at start: ' . var_export($this->get('csrf_used'), true));
+
+        if (!$sessionToken || $this->get('csrf_used') || time() > $csrfExpiry) {
+            $this->set('csrf_valid', false);
+            $errors['csrf_token'] = 'CSRF token used, not set, or expired';
         } else {
             $this->set('csrf_used', true);
-            $tokenIsValid = $this->f3->get($this->f3->get('VERB') . '.csrf_token') === $this->get('csrf_token');
+            $this->f3->sync('SESSION'); // Ensure session synchronization
+            $this->logger->debug('CSRF used status after setting to true: ' . var_export($this->get('csrf_used'), true));
+
+            $tokenIsValid = $this->f3->get($this->f3->get('VERB') . '.csrf_token') === $sessionToken;
             if (!$tokenIsValid) {
                 $this->logger->critical(
                     'Invalid request token provided ' .
                     $this->f3->get($this->f3->get('VERB') . '.csrf_token') .
-                    ' where it should be ' . $this->get('csrf_token')
+                    ' where it should be ' . $sessionToken .
+                    ' IP: ' . $this->f3->get('SERVER.REMOTE_ADDR') . ' User-Agent: ' . $this->f3->get('SERVER.HTTP_USER_AGENT')
                 );
                 $errors['csrf_token'] = 'Invalid CSRF token';
+                $this->set('csrf_valid', false);
+            } else {
+                $this->set('csrf_valid', true);
             }
         }
 
-        // Validate fields
+        // Debugging the final csrf_valid state
+        $this->logger->debug('CSRF valid status at end: ' . var_export($this->get('csrf_valid'), true));
+
         $this->set('form_errors', $errors);
 
-        return $tokenIsValid;
+        return $this->get('csrf_valid');
+    }
+
+    protected function initializeSession(?SQL $db, $table, $force, $key)
+    {
+        $sessionCallback = function($session) {
+            if (($ip = $session->ip()) !== $this->f3->get('IP')) {
+                $this->logger->warning('User changed IP: ' . $ip);
+            } else {
+                $this->logger->warning('User changed browser/device: ' . $this->f3->get('AGENT'));
+            }
+
+            return true;
+        };
+
+        if ('CACHE' === $table) {
+            $this->internalSession = new F3Session($sessionCallback, $key);
+        } else {
+            $this->internalSession = new SQLSession($db, $table, $force, $sessionCallback, $key);
+        }
+
+        if (!$this->get('csrf_token')) {
+            $this->generateToken();
+        }
     }
 }
