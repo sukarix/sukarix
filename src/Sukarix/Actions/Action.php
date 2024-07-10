@@ -78,11 +78,10 @@ abstract class Action extends Tailored
         if ($this->session->isLoggedIn() && $this->f3->get('ALIAS') === $this->f3->get('ALIASES.login')) {
             // @todo : add a reroute handler
             $this->f3->reroute($this->f3->get('ALIASES.dashboard'));
-        } elseif (\in_array($this->f3->VERB, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && !$this->session->validateToken()) {
+        } elseif ($this->f3->get('SECURITY.csrf.enabled') && \in_array($this->f3->VERB, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && !$this->session->validateToken()) {
             // @todo: add a handler or middleware to handle this
             $this->f3->reroute($this->f3->get('PATH'));
         }
-
         // Rerouted paged uri having the page value less than one
         if ($this->f3->exists('PARAMS.page') && $this->f3->get('PARAMS.page') < 1) {
             $uri = $this->f3->get('PATH');

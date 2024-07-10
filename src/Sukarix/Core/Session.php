@@ -17,6 +17,8 @@ class Session extends Tailored
     use LogWriter;
 
     protected $internalSession;
+    protected $csrfEnabled;
+    protected $csrfExpiry;
 
     /**
      * Session constructor.
@@ -28,6 +30,8 @@ class Session extends Tailored
     public function __construct(?SQL $db = null, $table = 'sessions', $force = false, $key = null)
     {
         Processor::instance()->initialize($this);
+        $this->csrfEnabled = $this->f3->get('SECURITY.csrf.enabled');
+        $this->csrfExpiry  = $this->f3->get('SECURITY.csrf.expiry');
         $this->initializeSession($db, $table, $force, $key);
     }
 
@@ -118,7 +122,7 @@ class Session extends Tailored
      *
      * @throws \InvalidArgumentException if the provided role is neither a string nor an array
      */
-    public function isRole($role)
+    public function isRole($role): bool
     {
         if (\is_string($role)) {
             return $role === $this->getRole();
@@ -139,16 +143,14 @@ class Session extends Tailored
 
     /**
      *  Generates a CSRF Token and stores it in the Session.
-     *
-     * @return string
      */
-    public function generateToken()
+    public function generateToken(): string
     {
         $token = $this->internalSession->csrf();
         $this->set('csrf_token', $token);
         $this->set('csrf_used', false);
         $this->set('csrf_valid', true);
-        $this->set('csrf_expiry', time() + 3600);
+        $this->set('csrf_expiry', time() + $this->csrfExpiry);
 
         return $token;
     }
@@ -160,16 +162,18 @@ class Session extends Tailored
 
     public function isCsrfValid(): bool
     {
-        return $this->get('csrf_valid');
+        return !$this->csrfEnabled || $this->get('csrf_valid');
     }
 
     /**
      *  Compares the given token with the value in the Session.
-     *
-     * @return bool
      */
     public function validateToken(): bool
     {
+        if (!$this->csrfEnabled) {
+            return true;
+        }
+
         $errors       = [];
         $sessionToken = $this->get('csrf_token');
         $csrfExpiry   = $this->get('csrf_expiry');
