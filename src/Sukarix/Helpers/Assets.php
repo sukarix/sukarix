@@ -13,12 +13,7 @@ use Sukarix\Validation\Constraints;
  */
 class Assets extends Helper
 {
-    /**
-     * @var array
-     */
-    private $assets;
-
-    private $validator;
+    private array $assets;
 
     public function __construct()
     {
