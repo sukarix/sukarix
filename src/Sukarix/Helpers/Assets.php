@@ -98,22 +98,23 @@ class Assets extends Helper
             unset($node['@attrib']);
         }
 
-        return self::instance()->renderJsTag($params['src']);
+        return self::instance()->renderJsTag($params);
     }
 
     /**
-     * @param $filePath string
+     * @param array $params
      *
      * @return string
      */
-    public function renderJsTag($filePath)
+    public function renderJsTag($params)
     {
-        $filePath = '/js/' . $filePath;
+        $filePath = '/js/' . $params['src'];
+        $type     = $params['type'] ?: 'text/javascript';
         if (true === $this->f3->get('MINIFY_JS') && !str_contains($filePath, '.min.')) {
-            $jsTag = '<script src="/minified/' . $this->minifyJavaScript($filePath, mb_stripos($filePath, '.min.')) . '" type="text/javascript"></script>' . "\n";
+            $jsTag = '<script src="/minified/' . $this->minifyJavaScript($filePath, mb_stripos($filePath, '.min.')) . '" type="' . $type . '"></script>' . "\n";
         } else {
             Constraints::instance()->check($this->f3->get('ROOT') . $filePath, 'file', true, 'js_file');
-            $jsTag = '<script src="' . $filePath . '" type="text/javascript"></script>' . "\n";
+            $jsTag = '<script src="' . $filePath . '" type="' . $type . '"></script>' . "\n";
         }
 
         return $jsTag;
