@@ -61,7 +61,7 @@ abstract class Model extends Cortex
         $this->afterinsert(
             static function(self $self): void {
                 if ($self->primary) {
-                    $self[$self->primary] = $self->mapper->get($self->primary);
+                    $self[$self->primary] = $self->mapper->get('_id');
                 }
             }
         );
