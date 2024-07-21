@@ -146,9 +146,9 @@ class Assets extends Helper
         return $fileName;
     }
 
-    public function addJs($path): void
+    public function addJs(string $path, string $type = 'text/javascript'): void
     {
-        $this->assets['footer'][] = $path;
+        $this->assets['footer'][] = ['src' => $path, 'type' => $type];
     }
 
     public function addCss($path): void
