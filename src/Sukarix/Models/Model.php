@@ -105,12 +105,40 @@ abstract class Model extends Cortex
 
     /**
      * Returns object converted to an array.
-     *
-     * @param int $depth
      */
-    public function toArray($depth = 0): array
+    public function toArray(int $depth = 0): array
     {
         return $this->cast(null, $depth);
+    }
+
+    /**
+     * Load model data from an array.
+     */
+    public function fromArray(array $data): self
+    {
+        $reflection = new \ReflectionClass($this);
+        $properties = $reflection->getProperties(\ReflectionProperty::IS_PUBLIC | \ReflectionProperty::IS_PROTECTED);
+
+        $phpDocProperties = $this->getPhpDocProperties($reflection);
+
+        foreach ($properties as $property) {
+            $name = $property->getName();
+            $type = $this->getPropertyType($property);
+
+            if (isset($data[$name])) {
+                $value         = $this->castValue($data[$name], $type);
+                $this->{$name} = $value;
+            }
+        }
+
+        foreach ($phpDocProperties as $name => $type) {
+            if (isset($data[$name])) {
+                $value         = $this->castValue($data[$name], $type);
+                $this->{$name} = $value;
+            }
+        }
+
+        return $this;
     }
 
     public function hasChanges()
@@ -216,5 +244,63 @@ abstract class Model extends Cortex
         }
 
         return sprintf('{%s}', implode(',', $result));
+    }
+
+    /**
+     * Get PHPDoc properties and their types.
+     */
+    protected function getPhpDocProperties(\ReflectionClass $reflection): array
+    {
+        $docComment = $reflection->getDocComment();
+        $properties = [];
+
+        if ($docComment) {
+            preg_match_all('/@property\s+([^\s]+)\s+\$([^\s]+)/', $docComment, $matches, PREG_SET_ORDER);
+            foreach ($matches as $match) {
+                $properties[$match[2]] = $match[1];
+            }
+        }
+
+        return $properties;
+    }
+
+    /**
+     * Get the type of a property from its PHPDoc.
+     */
+    protected function getPropertyType(\ReflectionProperty $property): ?string
+    {
+        $docComment = $property->getDocComment();
+        if ($docComment) {
+            if (preg_match('/@property\s+([^\s]+)\s+\$' . $property->getName() . '/', $docComment, $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Cast a value to the specified type.
+     *
+     * @return mixed
+     */
+    protected static function castValue(string $value, ?string $type)
+    {
+        switch ($type) {
+            case 'int':
+                return (int) $value;
+
+            case 'float':
+                return (float) $value;
+
+            case 'bool':
+                return 'y' === mb_strtolower($value) || 'true' === mb_strtolower($value) || '1' === $value;
+
+            case '\DateTime':
+                return Time::db($value);
+
+            default:
+                return $value;
+        }
     }
 }
