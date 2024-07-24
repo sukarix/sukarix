@@ -38,22 +38,16 @@ abstract class Action extends Tailored
     public const TEXT            = 'Content-Type: text/plain; charset=utf-8';
     public const XML             = 'Content-Type: text/xml; charset=UTF-8';
 
-    /**
-     * The view name to render.
-     *
-     * @var string
-     */
-    protected $view;
+    protected string $view;
 
     /**
-     * @var string
+     * Contains the arguments passed in command line using the format --key=value.
      */
+    protected array $argv;
+
     private $headerAuthorization;
 
-    /**
-     * @var string
-     */
-    private $templatesDir;
+    private string $templatesDir;
 
     /**
      * initialize controller.
@@ -86,6 +80,10 @@ abstract class Action extends Tailored
         if ($this->f3->exists('PARAMS.page') && $this->f3->get('PARAMS.page') < 1) {
             $uri = $this->f3->get('PATH');
             $this->f3->reroute(preg_replace('/\/' . $this->f3->get('PARAMS.page') . '$/', '/1', $uri));
+        }
+
+        if ($this->f3->get('CLI')) {
+            $this->parseCliArguments($this->f3->get('SERVER')['argv']);
         }
     }
 
@@ -249,6 +247,18 @@ abstract class Action extends Tailored
         }
 
         return $credentials;
+    }
+
+    private function parseCliArguments(array $argv): void
+    {
+        $this->argv = [];
+        foreach ($argv as $arg) {
+            if (str_starts_with($arg, '--') && str_contains($arg, '=')) {
+                [$key, $value]    = explode('=', mb_substr($arg, 2), 2);
+                $this->argv[$key] = $value;
+            }
+        }
+        $this->logger->info('Parsed CLI arguments', $this->argv);
     }
 
     private function parseXMLView(?string $view = null): string
