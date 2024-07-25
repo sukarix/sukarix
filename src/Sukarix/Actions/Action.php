@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Sukarix\Actions;
 
-use SimpleXMLElement;
 use Sukarix\Behaviours\HasAccess;
 use Sukarix\Behaviours\HasAssets;
 use Sukarix\Behaviours\HasEvents;
@@ -45,7 +44,7 @@ abstract class Action extends Tailored
      */
     protected array $argv;
 
-    private $headerAuthorization;
+    private string $headerAuthorization;
 
     private string $templatesDir;
 
@@ -94,27 +93,27 @@ abstract class Action extends Tailored
     }
 
     /**
-     * @param null|mixed $template
-     * @param null|mixed $view
-     * @param mixed      $mime
+     * Renders the template.
+     *
+     * @param null|mixed $template template file name
+     * @param null|mixed $view     view name to render
+     * @param mixed      $mime     MIME type for the response
      *
      * @throws \Exception
      */
     public function render($template = null, $view = null, $mime = 'text/html'): void
     {
-        // automatically load the view from the class namespace
-        if (null === $view) {
-            $view = str_replace(['actions\_', '\_'], ['', '/'], $this->f3->snakecase(static::class));
-        }
+        // Automatically determine the view from the class namespace if not provided
+        $view ??= $this->determineView();
 
-        $this->f3->set('view', $this->setView($view));
-        if (null === $template) {
-            $template = $this->view ?: $this->f3->get('template.default');
-        }
-        // This required to register the template extensions before rendering it
-        // We do it at this time because we are sure that we want to render starting from here
+        // Set the view path in F3's hive
+        $this->f3->set('view', $this->setViewPath($view));
+
+        // Determine the template, defaulting to the class property or F3's default template
+        $template ??= $this->view ?? $this->f3->get('template.default');
+
+        // Register template extensions and render the template
         Injector::instance()->get('html');
-        // add controller assets to assets.css and assets.js hive properties
         echo \Template::instance()->render($template . '.phtml', $mime);
     }
 
@@ -167,19 +166,21 @@ abstract class Action extends Tailored
     }
 
     /**
-     * Render XML content, accepting either SimpleXMLElement or string.
+     * Renders XML content, accepting either SimpleXMLElement or string.
      *
-     * @param null|\SimpleXMLElement|string $xml
+     * @param null|\SimpleXMLElement|string $xml XML data to render
+     *
+     * @throws \InvalidArgumentException if the provided XML is neither a string nor an instance of SimpleXMLElement
      */
     public function renderXMLContent($xml = null): void
     {
         // Set the XML header
         header('Content-Type: text/xml; charset=UTF-8');
 
-        if (\is_string($xml)) {
-            echo $xml;
-        } elseif ($xml instanceof \SimpleXMLElement) {
+        if ($xml instanceof \SimpleXMLElement) {
             echo $xml->asXML();
+        } elseif (\is_string($xml)) {
+            echo $xml;
         } else {
             throw new \InvalidArgumentException('Invalid XML input: must be SimpleXMLElement or string.');
         }
@@ -187,13 +188,32 @@ abstract class Action extends Tailored
 
     /**
      * @return mixed
+     *
+     * @throws \JsonException
      */
     public function getDecodedBody(): array
     {
-        return json_decode($this->f3->get('BODY'), true);
+        return json_decode($this->f3->get('BODY'), true, 512, JSON_THROW_ON_ERROR);
     }
 
-    protected function setView($name)
+    /**
+     * Determines the view name from the class namespace.
+     *
+     * @return string the view name
+     */
+    protected function determineView(): string
+    {
+        return str_replace(['actions\_', '\_'], ['', '/'], $this->f3->snakecase(static::class));
+    }
+
+    /**
+     * Sets the view path.
+     *
+     * @param string $name the view name
+     *
+     * @return string the full path to the view
+     */
+    protected function setViewPath(string $name): string
     {
         return "{$name}.phtml";
     }
@@ -235,18 +255,14 @@ abstract class Action extends Tailored
 
     protected function getCredentials(): array
     {
-        if (!$this->headerAuthorization) {
+        if (empty($this->headerAuthorization)) {
             return [];
         }
 
-        $credentials = base64_decode($this->headerAuthorization, true);
-        $credentials = explode(':', $credentials ?: '');
+        $decoded     = base64_decode($this->headerAuthorization, true);
+        $credentials = $decoded ? explode(':', $decoded, 2) : [];
 
-        if (2 !== \count($credentials)) {
-            return [];
-        }
-
-        return $credentials;
+        return 2 === \count($credentials) ? $credentials : [];
     }
 
     private function parseCliArguments(array $argv): void
