@@ -36,11 +36,7 @@ class TaskScheduler extends Action
      */
     public function execute($f3, $params): void
     {
-        // Clean logs older than 14 days (default.ini)
-        $this->scheduler->php($this->documentRoot, null, ['/cli/logs/clean' => ''], 'logs-clean')->onlyOne()->daily(1);
-
-        // Clean old sessions every 8 hours at 10 minutes after the hour
-        $this->scheduler->php($this->documentRoot, null, ['/cli/sessions/clean' => ''], 'sessions-clean')->onlyOne()->at('20 */8 * * *');
+        $this->defineTasks();
 
         // Run all the jobs
         $this->scheduler->run();
@@ -49,5 +45,14 @@ class TaskScheduler extends Action
         if (!empty($failedJobs)) {
             $this->logger->warning('Failed to execute jobs.', ['jobs' => $failedJobs]);
         }
+    }
+
+    protected function defineTasks(): void
+    {
+        // Clean logs older than 14 days (default.ini)
+        $this->scheduler->php($this->documentRoot, null, ['/cli/logs/clean' => ''], 'logs-clean')->onlyOne()->daily(1);
+
+        // Clean old sessions every 8 hours at 10 minutes after the hour
+        $this->scheduler->php($this->documentRoot, null, ['/cli/sessions/clean' => ''], 'sessions-clean')->onlyOne()->at('20 */8 * * *');
     }
 }

@@ -296,11 +296,10 @@ abstract class Action extends Tailored
 
     private function formatXmlString(string $xml): string
     {
-        $lines        = explode("\n", trim($xml));
         $indent       = 0;
         $formattedXml = '';
 
-        foreach ($lines as $line) {
+        foreach (explode("\n", trim($xml)) as $line) {
             if (preg_match('/^<\/\w/', $line)) {
                 --$indent;
             }

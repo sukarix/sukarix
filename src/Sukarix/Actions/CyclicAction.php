@@ -25,21 +25,18 @@ abstract class CyclicAction extends Action
         $this->relaxPeriod      = (int) @$this->argv['relax'] ?: 0;
 
         $this->startTime = Carbon::now();
-        $this->logger->info('Execution started', ['max_execution_time' => $this->maxExecutionTime]);
+        $this->logger->info('Execution started', ['start_time' => $this->startTime, 'max_execution_time' => $this->maxExecutionTime, 'relax_period' => $this->relaxPeriod]);
 
         while ($this->getCurrentRuntime() < $this->maxExecutionTime - $this->relaxPeriod) {
             $this->executeAction($f3, $params);
             $currentRuntime = $this->getCurrentRuntime();
 
             if ($currentRuntime >= $this->maxExecutionTime - $this->relaxPeriod) {
-                $this->logger->info('Active period ended, entering relax period', ['current_runtime' => $currentRuntime]);
+                $this->logger->info('Active period ended, entering relax period and stopping the execution', ['current_runtime' => $currentRuntime]);
 
                 break;
             }
         }
-
-        $this->logger->info('Relax period started', ['duration' => $this->relaxPeriod]);
-        sleep($this->relaxPeriod);
     }
 
     protected function getCurrentRuntime(): float
