@@ -8,7 +8,7 @@ Refer to our [support policy](https://sukarix.com/docs/release-notes.html#suppor
 
 ## Reporting a Vulnerability
 
-If you identify a security issue in Sukarix, email us at [contact@riadvice.tn](mailto:contact@riadvice.tn). We will
+If you identify a security issue in Sukarix, email us at [contact@riadvice.com](mailto:contact@riadvice.com). We will
 address all security vulnerabilities promptly.
 
 ### Public PGP Key
