@@ -38,9 +38,11 @@ class Bootstrap extends Boot
 
     protected function loadConfiguration(): void
     {
+        // Use F3's built-in configuration loading
         $this->f3->config('config/classes.ini');
         $this->f3->config('config/default.ini');
 
+        // Load additional configs from CONFIGS setting
         $this->f3->get('CONFIGS') && array_map(function($file) {
             $this->f3->config('config/' . trim($file) . '.ini');
         }, $this->f3->get('CONFIGS'));
