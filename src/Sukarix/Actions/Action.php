@@ -14,6 +14,7 @@ use Sukarix\Behaviours\LogWriter;
 use Sukarix\Configuration\Environment;
 use Sukarix\Core\Injector;
 use Sukarix\Core\Tailored;
+use Sukarix\Http\Response;
 use Sukarix\Enum\UserRole;
 use Sukarix\Enum\UserStatus;
 use Sukarix\Models\User;
@@ -38,6 +39,7 @@ abstract class Action extends Tailored
     public const XML             = 'Content-Type: text/xml; charset=UTF-8';
 
     protected string $view;
+    protected Response $response;
 
     /**
      * Contains the arguments passed in command line using the format --key=value.
@@ -45,7 +47,6 @@ abstract class Action extends Tailored
     protected array $argv;
 
     private string $headerAuthorization;
-
     private string $templatesDir;
 
     /**
@@ -58,6 +59,9 @@ abstract class Action extends Tailored
         $this->parseHeaderAuthorization();
 
         $this->templatesDir = $this->f3->get('ROOT') . $this->f3->get('BASE') . '/../app/ui/';
+        
+        // Initialize response handler
+        $this->response = new Response();
     }
 
     public function beforeroute(): void
@@ -84,6 +88,59 @@ abstract class Action extends Tailored
         if ($this->f3->get('CLI')) {
             $this->parseCliArguments($this->f3->get('SERVER')['argv']);
         }
+    }
+
+    /**
+     * Enhanced response methods using Response class
+     */
+    protected function json($data, int $status = 200): void
+    {
+        $this->response->json($data, $status);
+    }
+
+    protected function success($data = null, string $message = 'Success'): void
+    {
+        $this->response->success($data, $message);
+    }
+
+    protected function error(string $message, int $status = 400, $errors = null): void
+    {
+        $this->response->error($message, $status, $errors);
+    }
+
+    protected function validationError(array $errors, string $message = 'Validation failed'): void
+    {
+        $this->response->validationError($errors, $message);
+    }
+
+    protected function notFound(string $message = 'Resource not found'): void
+    {
+        $this->response->notFound($message);
+    }
+
+    protected function unauthorized(string $message = 'Unauthorized'): void
+    {
+        $this->response->unauthorized($message);
+    }
+
+    protected function paginate(array $data, int $total, int $page, int $limit): void
+    {
+        $this->response->paginate($data, $total, $page, $limit);
+    }
+
+    /**
+     * Get request data (JSON or form)
+     */
+    protected function getRequestData(): array
+    {
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+        if (str_contains($contentType, 'application/json')) {
+            $input = file_get_contents('php://input');
+            return json_decode($input, true) ?? [];
+        }
+
+        return $this->f3->get('POST') ?? [];
     }
 
     public function onAccessAuthorizeDeny($route, $subject): void
