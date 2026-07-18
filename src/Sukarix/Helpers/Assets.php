@@ -111,7 +111,9 @@ class Assets extends Helper
     {
         $filePath = '/js/' . $params['src'];
         $type     = $params['type'] ?: 'text/javascript';
-        if (true === $this->f3->get('MINIFY_JS') && !str_contains($filePath, '.min.')) {
+        // Skip minification for ES modules — serving them from /minified/ breaks
+        // relative import paths, and simple minifiers mangle module syntax.
+        if (true === $this->f3->get('MINIFY_JS') && !str_contains($filePath, '.min.') && 'module' !== $type) {
             $jsTag = '<script src="/minified/' . $this->minifyJavaScript($filePath, mb_stripos($filePath, '.min.')) . '" type="' . $type . '"></script>' . "\n";
         } else {
             Constraints::instance()->check($this->f3->get('ROOT') . $filePath, 'file', true, 'js_file');
