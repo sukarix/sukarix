@@ -7,4 +7,5 @@ metrics/*
 *.log
 /nbproject/private/
 /.php-cs-fixer.cache
-/.phpunit.cache/
+/statera/test.result
+/public/statera/
