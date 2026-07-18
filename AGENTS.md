@@ -4,10 +4,8 @@ PHP 8.4+ framework on Fat-Free Framework (F3). Uses Statera for testing (not PHP
 
 ## Commits
 
-Unitary commits. Author: Ghazi Triki. Co-authored with Devin.
+Unitary commits. Author: Ghazi Triki. No co-author trailers, no tool attribution.
 
 ```
 <description>
-
-Co-Authored-By: Devin
 ```
