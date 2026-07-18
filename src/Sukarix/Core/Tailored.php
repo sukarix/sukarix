@@ -9,11 +9,6 @@ abstract class Tailored extends \Prefab
      */
     public static function instance(): static
     {
-        $instance = parent::instance();
-
-        // Handle initialisation of the defined traits
-        Processor::instance()->initialize($instance);
-
-        return $instance;
+        return parent::instance();
     }
 }
