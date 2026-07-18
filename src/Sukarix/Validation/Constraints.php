@@ -3,6 +3,7 @@
 namespace Sukarix\Validation;
 
 use Sukarix\Behaviours\HasF3;
+use Sukarix\Core\Processor;
 use Sukarix\Core\Tailored;
 
 class Constraints extends Tailored
@@ -13,6 +14,7 @@ class Constraints extends Tailored
 
     public function __construct()
     {
+        Processor::instance()->initialize($this);
         // Load the configuration only once when the class is instantiated
         \Base::instance()->config('config/validation.ini');
     }
@@ -134,7 +136,7 @@ class Constraints extends Tailored
     public function notEmpty(mixed $val): bool
     {
         if (\is_string($val)) {
-            return '' !== trim($val);
+            return '' !== mb_trim($val);
         }
         if (\is_array($val)) {
             return !empty(array_filter($val, static fn ($item) => null !== $item && '' !== $item));
@@ -187,7 +189,7 @@ class Constraints extends Tailored
     {
         // Validate min and max values
         if ($min > $max) {
-            throw new \InvalidArgumentException(sprintf('min value %d cannot be less than max value %d', $min, $max));
+            throw new \InvalidArgumentException(\sprintf('min value %d cannot be less than max value %d', $min, $max));
         }
 
         // Extract length based on input type
