@@ -1,0 +1,14 @@
+{
+  "PostToolUse": [
+    {
+      "matcher": "^(edit|write|notebook_edit)$",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "$DEVIN_PROJECT_DIR/.devin/scripts/auto-commit.sh",
+          "timeout": 15
+        }
+      ]
+    }
+  ]
+}
