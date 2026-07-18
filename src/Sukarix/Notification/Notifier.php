@@ -7,12 +7,18 @@ namespace Sukarix\Notification;
 use Sukarix\Behaviours\HasF3;
 use Sukarix\Behaviours\LogWriter;
 use Sukarix\Configuration\Environment;
+use Sukarix\Core\Processor;
 use Sukarix\Core\Tailored;
 
 class Notifier extends Tailored
 {
     use HasF3;
     use LogWriter;
+
+    public function __construct()
+    {
+        Processor::instance()->initialize($this);
+    }
 
     /**
      * @param \Exception $exception
@@ -48,7 +54,7 @@ class Notifier extends Tailored
      */
     public function zulip(array $params = []): array|false
     {
-        return \Web::instance()->request(rtrim($this->f3->get('NOTIFICATIONS.zulip.uri'), '/') . '/api/v1/messages', [
+        return \Web::instance()->request(mb_rtrim($this->f3->get('NOTIFICATIONS.zulip.uri'), '/') . '/api/v1/messages', [
             'method' => 'POST',
             'header' => [
                 'Authorization: Basic ' . base64_encode($this->f3->get('NOTIFICATIONS.zulip.mail') . ':' . $this->f3->get('NOTIFICATIONS.zulip.token')),
