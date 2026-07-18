@@ -7,6 +7,7 @@ namespace Sukarix\Mail;
 use Sukarix\Behaviours\HasF3;
 use Sukarix\Behaviours\LogWriter;
 use Sukarix\Configuration\Environment;
+use Sukarix\Core\Processor;
 use Sukarix\Core\Tailored;
 
 /**
@@ -24,6 +25,7 @@ class MailSender extends Tailored
 
     public function __construct()
     {
+        Processor::instance()->initialize($this);
         $this->mailer = new \Mailer('UTF-8');
         \Mailer::initTracking();
     }
@@ -38,10 +40,10 @@ class MailSender extends Tailored
         $snooze       = strtotime('1 day') - time();
         $messageId    = $this->generateId();
         if (@filemtime($mailSentPath) + $snooze < time() && @file_put_contents($mailSentPath, 'sent')) {
-            $this->f3->set('mailer.from_name', 'BBB LB Debugger');
+            $this->f3->set('mailer.from_name', 'Application Debugger');
             $subject = 'PHP: An error occurred on server ' . Environment::getHostName() . " ERROR ID '{$hash}'";
             $message = 'An error occurred on <b>' . Environment::getHostName() . '</b><br />' . nl2br($exception->getTraceAsString());
-            $this->smtpSend(null, $this->f3->get('debug.email'), 'Sukarix Application Debugger', $subject, $message, $messageId);
+            $this->smtpSend(null, $this->f3->get('debug.email'), 'Application Debugger', $subject, $message, $messageId);
         }
     }
 
@@ -59,7 +61,7 @@ class MailSender extends Tailored
         return $this->smtpSend(null, $to, $title, $subject, $message, $messageId);
     }
 
-    private function smtpSend($from, $to, $title, $subject, $message, $messageId): bool
+    protected function smtpSend($from, $to, $title, $subject, $message, $messageId): bool
     {
         if (\is_array($to)) {
             foreach ($to as $email) {
@@ -91,9 +93,9 @@ class MailSender extends Tailored
     /**
      * Generate a unique message id.
      */
-    private function generateId(): string
+    protected function generateId(): string
     {
-        return sprintf(
+        return \sprintf(
             '<%s.%s@%s>',
             base_convert(microtime(), 10, 36),
             base_convert(bin2hex(openssl_random_pseudo_bytes(8)), 16, 36),
