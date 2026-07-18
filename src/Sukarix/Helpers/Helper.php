@@ -8,6 +8,7 @@ use Sukarix\Behaviours\HasEvents;
 use Sukarix\Behaviours\HasF3;
 use Sukarix\Behaviours\HasSession;
 use Sukarix\Behaviours\LogWriter;
+use Sukarix\Core\Processor;
 use Sukarix\Core\Tailored;
 
 /**
@@ -19,4 +20,9 @@ class Helper extends Tailored
     use HasF3;
     use HasSession;
     use LogWriter;
+
+    public function __construct()
+    {
+        Processor::instance()->initialize($this);
+    }
 }
