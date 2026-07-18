@@ -27,11 +27,20 @@ class Session extends Tailored
      * @param bool   $force
      * @param null   $key
      */
-    public function __construct(?SQL $db = null, $table = 'sessions', $force = false, $key = null)
+    public function __construct(?SQL $db = null, $table = null, $force = false, $key = null)
     {
         Processor::instance()->initialize($this);
         $this->csrfEnabled = $this->f3->get('SECURITY.csrf.enabled');
         $this->csrfExpiry  = $this->f3->get('SECURITY.csrf.expiry');
+
+        if (null === $table) {
+            $table = $this->f3->get('session.table') ?? 'sessions';
+        }
+
+        if ('CACHE' !== $table && null === $db) {
+            $db = \Registry::exists('db') ? \Registry::get('db') : null;
+        }
+
         $this->initializeSession($db, $table, $force, $key);
     }
 
@@ -192,10 +201,10 @@ class Session extends Tailored
             $tokenIsValid = $this->f3->get($this->f3->get('VERB') . '.csrf_token') === $sessionToken;
             if (!$tokenIsValid) {
                 $this->logger->critical(
-                    'Invalid request token provided ' .
-                    $this->f3->get($this->f3->get('VERB') . '.csrf_token') .
-                    ' where it should be ' . $sessionToken .
-                    ' IP: ' . $this->f3->get('SERVER.REMOTE_ADDR') . ' User-Agent: ' . $this->f3->get('SERVER.HTTP_USER_AGENT')
+                    'Invalid request token provided '
+                    . $this->f3->get($this->f3->get('VERB') . '.csrf_token')
+                    . ' where it should be ' . $sessionToken
+                    . ' IP: ' . $this->f3->get('SERVER.REMOTE_ADDR') . ' User-Agent: ' . $this->f3->get('SERVER.HTTP_USER_AGENT')
                 );
                 $errors['csrf_token'] = 'Invalid CSRF token';
                 $this->set('csrf_valid', false);
