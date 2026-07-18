@@ -2,6 +2,7 @@
     "name": "sukarix/sukarix",
     "description": "The Sukarix Framework - Just the Right Amount of Sweetness and Efficiency on Top of Fat-Free",
     "type": "library",
+    "version": "0.3.0",
     "keywords": [
         "framework",
         "sukarix",
