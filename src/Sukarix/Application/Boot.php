@@ -43,6 +43,7 @@ abstract class Boot
 
         // start configuration F3 framework from this point
         $this->loadConfiguration();
+        $this->prepareCache();
         $this->setupLogging();
     }
 
@@ -123,6 +124,26 @@ abstract class Boot
         if ($this->isCli) {
             $this->f3->config('config/routes-cli.ini');
             $this->f3->set('ROOT', $this->f3->get('ROOT') . '/../public');
+
+            $argv = $this->f3->get('SERVER.argv') ?? [];
+            if (isset($argv[1])) {
+                [$path, $query] = array_pad(explode('?', $argv[1], 2), 2, null);
+                $this->f3->set('PATH', '/' . mb_ltrim($path, '/'));
+
+                if (null !== $query) {
+                    parse_str($query, $params);
+                    foreach ($params as $key => $value) {
+                        $this->f3->set('GET.' . $key, $value);
+                    }
+                }
+            }
+        }
+    }
+
+    protected function prepareCache(): void
+    {
+        if (!$this->f3->exists('CACHE') || false === $this->f3->get('CACHE')) {
+            $this->f3->set('CACHE', 'folder=tmp/cache/');
         }
     }
 
@@ -135,7 +156,7 @@ abstract class Boot
             $this->logger->debug($dbLog);
         }
 
-        $this->logger->notice(sprintf(
+        $this->logger->notice(\sprintf(
             '[%s] Script executed in %s seconds using %s/%s MB memory/peak | Data Received: %s | Data Sent: %s',
             $this->f3->get('PATH'),
             round(microtime(true) - $this->f3->get('TIME'), 3),
