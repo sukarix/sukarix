@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Sukarix\Actions\Logs;
 
+use Carbon\Carbon;
 use Sukarix\Actions\Action;
 
 /**
@@ -17,11 +18,25 @@ class Clean extends Action
      */
     public function execute($f3, $params): void
     {
-        $files = glob($f3->get('LOGS') . '*.log');
-        $now   = time();
+        $path = mb_rtrim($f3->get('LOGS'), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR;
+        $date = Carbon::yesterday()->toDateString();
 
-        foreach ($files as $file) {
-            if (is_file($file) && $now - filemtime($file) >= 60 * 60 * 24 * $f3->get('log.keep')) { // 14 days by default
+        // Rotate
+        foreach (['error', 'exception'] as $type) {
+            $src = "{$path}{$type}.log";
+            $dst = "{$path}{$type}-{$date}.log";
+
+            if (is_file($src)) {
+                rename($src, $dst);
+            }
+        }
+
+        // Cleanup
+        $keepDays = (int) ($f3->get('log.keep') ?: 7);
+        $maxAge   = 60 * 60 * 24 * $keepDays;
+
+        foreach (glob($path . '*.log') as $file) {
+            if (is_file($file) && (time() - filemtime($file)) >= $maxAge) {
                 $this->logger->info('Deleting old log file', ['log_file' => $file]);
                 unlink($file);
             }
