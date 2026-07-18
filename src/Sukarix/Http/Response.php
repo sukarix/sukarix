@@ -6,7 +6,7 @@ namespace Sukarix\Http;
 
 /**
  * Simple Response Handler for Sukarix Framework
- * Following F3 philosophy - lightweight and practical
+ * Following F3 philosophy - lightweight and practical.
  */
 class Response
 {
@@ -18,39 +18,46 @@ class Response
     }
 
     /**
-     * Send JSON response
+     * Send JSON response.
+     *
+     * @param mixed $data
      */
     public function json($data, int $status = 200): void
     {
         header('Content-Type: application/json; charset=utf-8', true, $status);
         echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
         exit;
     }
 
     /**
-     * Send success response
+     * Send success response.
+     *
+     * @param null|mixed $data
      */
     public function success($data = null, string $message = 'Success'): void
     {
         $this->json([
             'success' => true,
             'message' => $message,
-            'data' => $data
+            'data'    => $data,
         ]);
     }
 
     /**
-     * Send error response
+     * Send error response.
+     *
+     * @param null|mixed $errors
      */
     public function error(string $message, int $status = 400, $errors = null): void
     {
         $response = [
             'success' => false,
             'message' => $message,
-            'status' => $status
+            'status'  => $status,
         ];
 
-        if ($errors !== null) {
+        if (null !== $errors) {
             $response['errors'] = $errors;
         }
 
@@ -58,7 +65,7 @@ class Response
     }
 
     /**
-     * Send validation error response
+     * Send validation error response.
      */
     public function validationError(array $errors, string $message = 'Validation failed'): void
     {
@@ -66,7 +73,7 @@ class Response
     }
 
     /**
-     * Send not found response
+     * Send not found response.
      */
     public function notFound(string $message = 'Resource not found'): void
     {
@@ -74,7 +81,7 @@ class Response
     }
 
     /**
-     * Send unauthorized response
+     * Send unauthorized response.
      */
     public function unauthorized(string $message = 'Unauthorized'): void
     {
@@ -82,19 +89,19 @@ class Response
     }
 
     /**
-     * Send paginated response
+     * Send paginated response.
      */
     public function paginate(array $data, int $total, int $page, int $limit): void
     {
         $this->json([
-            'success' => true,
-            'data' => $data,
+            'success'    => true,
+            'data'       => $data,
             'pagination' => [
                 'total' => $total,
-                'page' => $page,
+                'page'  => $page,
                 'limit' => $limit,
-                'pages' => ceil($total / $limit)
-            ]
+                'pages' => ceil($total / $limit),
+            ],
         ]);
     }
 }
