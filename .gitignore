@@ -9,3 +9,4 @@ metrics/*
 /.php-cs-fixer.cache
 /statera/test.result
 /public/statera/
+/tmp/
