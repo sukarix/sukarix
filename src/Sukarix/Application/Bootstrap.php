@@ -44,7 +44,7 @@ class Bootstrap extends Boot
 
         // Load additional configs from CONFIGS setting
         $this->f3->get('CONFIGS') && array_map(function($file) {
-            $this->f3->config('config/' . trim($file) . '.ini');
+            $this->f3->config('config/' . mb_trim($file) . '.ini');
         }, $this->f3->get('CONFIGS'));
 
         $this->f3->config('config/config-' . $this->environment . '.ini');
