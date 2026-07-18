@@ -13,6 +13,6 @@ class Receiver extends Helper
 
     protected function prepareUploadDirectory($uploadDirectory)
     {
-        (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0o766, true) && !is_dir($uploadDirectory)) && throw new \RuntimeException(sprintf('Directory "%s" was not created', $uploadDirectory));
+        (!is_dir($uploadDirectory) && !mkdir($uploadDirectory, 0o766, true) && !is_dir($uploadDirectory)) && throw new \RuntimeException(\sprintf('Directory "%s" was not created', $uploadDirectory));
     }
 }
