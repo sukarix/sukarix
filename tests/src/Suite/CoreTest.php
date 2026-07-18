@@ -17,5 +17,6 @@ final class CoreTest extends TestGroup
 {
     protected $classes = [
         \Core\InjectorTest::class,
+        \Core\ResponseTest::class,
     ];
 }

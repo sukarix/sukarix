@@ -100,7 +100,33 @@ class Response
                 'total' => $total,
                 'page'  => $page,
                 'limit' => $limit,
-                'pages' => ceil($total / $limit),
+                'pages' => (int) ceil($total / $limit),
+            ],
+        ]);
+    }
+
+    /**
+     * Send cursor-paginated response.
+     *
+     * Unlike offset-based paginate(), cursor pagination is stable under
+     * concurrent inserts and works efficiently on large datasets.
+     *
+     * @param array      $data       the items for the current page
+     * @param string     $cursorField the field used as the cursor (e.g. 'id', 'created_on')
+     * @param int        $limit       page size
+     * @param bool       $hasMore     whether more items exist after the last item
+     * @param null|mixed $nextCursor  the cursor value for the next page (null if no more)
+     */
+    public function cursor(array $data, string $cursorField, int $limit, bool $hasMore, $nextCursor = null): void
+    {
+        $this->json([
+            'success' => true,
+            'data'    => $data,
+            'cursor'  => [
+                'field'    => $cursorField,
+                'limit'    => $limit,
+                'has_more' => $hasMore,
+                'next'     => $hasMore ? $nextCursor : null,
             ],
         ]);
     }
