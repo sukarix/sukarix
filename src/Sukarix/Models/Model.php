@@ -35,6 +35,13 @@ abstract class Model extends Cortex
     protected $pageSize;
 
     /**
+     * DTO storage for models instantiated without a database connection.
+     *
+     * @var array<string, mixed>
+     */
+    protected $dto = [];
+
+    /**
      * Base constructor. Initialises the model.
      *
      * @param null $db
@@ -44,7 +51,16 @@ abstract class Model extends Cortex
      */
     public function __construct($db = null, $table = null, $fluid = null, $ttl = 0)
     {
-        $this->db = !$db ? \Registry::get('db') : $db;
+        if ($db) {
+            $this->db = $db;
+        } elseif (\Registry::exists('db')) {
+            $this->db = \Registry::get('db');
+        }
+
+        if (!\is_object($this->db)) {
+            // Allow DTO-like usage when no database is configured (e.g. unit tests).
+            return;
+        }
 
         parent::__construct($this->db, $table, $fluid, $ttl);
 
@@ -74,6 +90,37 @@ abstract class Model extends Cortex
     }
 
     /**
+     * Magic setter that writes to a DTO buffer when no database is configured.
+     *
+     * @param mixed $key
+     * @param mixed $value
+     */
+    public function __set($key, $value)
+    {
+        if (!\is_object($this->db) || null === $this->mapper) {
+            $this->dto[$key] = $value;
+
+            return;
+        }
+
+        parent::__set($key, $value);
+    }
+
+    /**
+     * Magic isset that checks the DTO buffer when no database is configured.
+     *
+     * @param mixed $key
+     */
+    public function __isset($key)
+    {
+        if (!\is_object($this->db) || null === $this->mapper) {
+            return \array_key_exists($key, $this->dto);
+        }
+
+        return parent::__isset($key);
+    }
+
+    /**
      * @param mixed $filter
      *
      * @return array
@@ -98,9 +145,31 @@ abstract class Model extends Cortex
      */
     public function lastInsertId(): int
     {
-        $id = $this->db->exec("SELECT MAX(id) as seq FROM `{$this->table}`");
+        try {
+            $result = $this->db->exec('SELECT MAX(id) as seq FROM ' . $this->table);
+            $id     = $result[0]['seq'] ?? 0;
+            $this->logger->debug('Retrieved last insert ID', ['table' => $this->table, 'id' => $id]);
 
-        return $id[0]['seq'];
+            return (int) $id;
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to retrieve last insert ID', ['table' => $this->table, 'error' => $e->getMessage()]);
+
+            return 0;
+        }
+    }
+
+    /**
+     * Load a record by its primary key id.
+     *
+     * @param int $id
+     *
+     * @return self
+     */
+    public function loadById($id)
+    {
+        $this->load(['id = ?', $id]);
+
+        return $this;
     }
 
     /**
@@ -157,6 +226,26 @@ abstract class Model extends Cortex
         return false;
     }
 
+    /**
+     * Magic getter that reads from the DTO buffer when no database is configured.
+     *
+     * @param mixed $key
+     */
+    public function &__get($key)
+    {
+        if (!\is_object($this->db) || null === $this->mapper) {
+            if (\array_key_exists($key, $this->dto)) {
+                return $this->dto[$key];
+            }
+
+            $null = null;
+
+            return $null;
+        }
+
+        return parent::__get($key);
+    }
+
     protected function setCreatedOnDate(): void
     {
         // is_null($this->created_on) check is required for recreating old record from server data
@@ -184,6 +273,78 @@ abstract class Model extends Cortex
                 [$this, 'onCreateCleanUp']
             );
         }
+    }
+
+    /**
+     * Execute SQL query with error handling.
+     */
+    protected function execQuery(string $query, array $params = [], string $op = 'query'): array
+    {
+        try {
+            $result = $this->db->exec($query, $params);
+            $this->logger->debug("DB {$op}", ['params' => $this->sanitizeParams($params), 'count' => \count($result)]);
+
+            return $result ?: [];
+        } catch (\Exception $e) {
+            $this->logger->error("DB {$op} failed", ['error' => $e->getMessage()]);
+
+            return [];
+        }
+    }
+
+    /**
+     * Execute scalar query returning single value.
+     *
+     * @param mixed $default
+     *
+     * @return mixed
+     */
+    protected function execScalar(string $query, array $params = [], string $op = 'scalar', $default = null)
+    {
+        try {
+            $result = $this->db->exec($query, $params);
+            $value  = $result[0][array_key_first($result[0])] ?? $default;
+            $this->logger->debug("DB {$op}", ['value' => $value]);
+
+            return $value;
+        } catch (\Exception $e) {
+            $this->logger->error("DB {$op} failed", ['error' => $e->getMessage()]);
+
+            return $default;
+        }
+    }
+
+    /**
+     * Execute write query (INSERT/UPDATE/DELETE).
+     */
+    protected function execWrite(string $query, array $params = [], string $op = 'write'): bool
+    {
+        try {
+            $this->db->exec($query, $params);
+            $this->logger->info("DB {$op} completed");
+
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error("DB {$op} failed", ['error' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Check if record exists.
+     */
+    protected function recordExists(string $table, string $cond, array $params = []): bool
+    {
+        return \count($this->execQuery("SELECT 1 FROM {$table} WHERE {$cond}", $params, 'exists')) > 0;
+    }
+
+    /**
+     * Count records.
+     */
+    protected function countRecords(string $table, string $cond = '1=1', array $params = []): int
+    {
+        return (int) $this->execScalar("SELECT COUNT(*) as count FROM {$table} WHERE {$cond}", $params, 'count');
     }
 
     /**
@@ -243,7 +404,7 @@ abstract class Model extends Cortex
             }
         }
 
-        return sprintf('{%s}', implode(',', $result));
+        return \sprintf('{%s}', implode(',', $result));
     }
 
     /**
@@ -302,5 +463,27 @@ abstract class Model extends Cortex
             default:
                 return $value;
         }
+    }
+
+    /**
+     * Sanitize params for logging by redacting sensitive values.
+     */
+    private function sanitizeParams(array $params): array
+    {
+        $sensitive = ['password', 'secret', 'token', 'key'];
+        foreach ($params as $k => $v) {
+            if (\is_string($k)) {
+                $keyLower = mb_strtolower($k);
+                foreach ($sensitive as $word) {
+                    if (str_contains($keyLower, $word)) {
+                        $params[$k] = '***REDACTED***';
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $params;
     }
 }
