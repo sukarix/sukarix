@@ -17,6 +17,7 @@ class Assets extends Helper
 
     public function __construct()
     {
+        parent::__construct();
         $this->assets = ['head' => [], 'footer' => []];
     }
 
