@@ -443,10 +443,16 @@ abstract class Model extends Cortex
     /**
      * Cast a value to the specified type.
      *
+     * @param mixed $value
+     *
      * @return mixed
      */
-    protected static function castValue(string $value, ?string $type)
+    protected static function castValue(mixed $value, ?string $type)
     {
+        if (null === $value) {
+            return null;
+        }
+
         switch ($type) {
             case 'int':
                 return (int) $value;
@@ -455,7 +461,11 @@ abstract class Model extends Cortex
                 return (float) $value;
 
             case 'bool':
-                return 'y' === mb_strtolower($value) || 'true' === mb_strtolower($value) || '1' === $value;
+                if (\is_bool($value)) {
+                    return $value;
+                }
+
+                return 'y' === mb_strtolower((string) $value) || 'true' === mb_strtolower((string) $value) || '1' === (string) $value;
 
             case '\DateTime':
                 return Time::db($value);
