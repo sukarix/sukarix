@@ -72,7 +72,10 @@ abstract class Boot
          */
 
         if (true !== $this->f3->exists('GET.statera')) {
-            if (str_ends_with(Environment::getHostName(), '.test')) {
+            $env = getenv('APP_ENV') ?: '';
+            if (Environment::DEVELOPMENT === $env || Environment::PRODUCTION === $env) {
+                $this->f3->set(Environment::CONFIG_KEY, $env);
+            } elseif (str_ends_with(Environment::getHostName(), '.test')) {
                 $this->f3->set(Environment::CONFIG_KEY, Environment::DEVELOPMENT);
             } else {
                 $this->f3->set(Environment::CONFIG_KEY, Environment::PRODUCTION);
