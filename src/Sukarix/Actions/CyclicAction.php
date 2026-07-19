@@ -27,6 +27,14 @@ abstract class CyclicAction extends Action
         $this->startTime = Carbon::now();
         $this->logger->info('Execution started', ['start_time' => $this->startTime, 'max_execution_time' => $this->maxExecutionTime, 'relax_period' => $this->relaxPeriod]);
 
+        // maxExecutionTime = 0 means "run once" — the caller (e.g. the worker
+        // entrypoint) handles its own polling loop.
+        if (0 === $this->maxExecutionTime) {
+            $this->executeAction($f3, $params);
+
+            return;
+        }
+
         while ($this->getCurrentRuntime() < $this->maxExecutionTime - $this->relaxPeriod) {
             $this->executeAction($f3, $params);
             $currentRuntime = $this->getCurrentRuntime();
