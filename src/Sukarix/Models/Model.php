@@ -44,10 +44,10 @@ abstract class Model extends Cortex
     /**
      * Base constructor. Initialises the model.
      *
-     * @param null $db
-     * @param null $table
-     * @param null $fluid
-     * @param int  $ttl
+     * @param null|object $db
+     * @param null|string $table
+     * @param null|bool   $fluid
+     * @param int         $ttl
      */
     public function __construct($db = null, $table = null, $fluid = null, $ttl = 0)
     {
