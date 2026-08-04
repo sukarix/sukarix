@@ -30,8 +30,7 @@ trait HasCache
      */
     public function remember(string $key, callable $callback, int $ttl = 0): mixed
     {
-        $cached = $this->cache->get($key);
-        if (null !== $cached && false !== $cached) {
+        if ($this->cache->exists($key, $cached)) {
             return $cached;
         }
 

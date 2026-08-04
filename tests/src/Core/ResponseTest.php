@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Core;
 
+use Sukarix\Behaviours\HasCache;
 use Sukarix\Http\Response;
 use Test\Scenario;
 
@@ -31,11 +32,12 @@ final class ResponseTest extends Scenario
         ];
 
         $test = $this->newTest();
-        $test->expect($cursor['field'] === 'id', 'cursor field is id');
-        $test->expect($cursor['limit'] === 3, 'cursor limit is 3');
-        $test->expect($cursor['has_more'] === true, 'cursor has_more is true when more items exist');
-        $test->expect($cursor['next'] === 3, 'cursor next is the last item id');
-        $test->expect(\count($data) === 3, 'cursor data has 3 items');
+        $test->expect('id' === $cursor['field'], 'cursor field is id');
+        $test->expect(3 === $cursor['limit'], 'cursor limit is 3');
+        $test->expect(true === $cursor['has_more'], 'cursor has_more is true when more items exist');
+        $test->expect(3 === $cursor['next'], 'cursor next is the last item id');
+        $test->expect(3 === \count($data), 'cursor data has 3 items');
+
         return $test->results();
     }
 
@@ -49,8 +51,9 @@ final class ResponseTest extends Scenario
         ];
 
         $test = $this->newTest();
-        $test->expect($cursor['has_more'] === false, 'cursor has_more is false when no more items');
-        $test->expect($cursor['next'] === null, 'cursor next is null when no more items');
+        $test->expect(false === $cursor['has_more'], 'cursor has_more is false when no more items');
+        $test->expect(null === $cursor['next'], 'cursor next is null when no more items');
+
         return $test->results();
     }
 
@@ -61,30 +64,65 @@ final class ResponseTest extends Scenario
         $pages = (int) ceil($total / $limit);
 
         $test = $this->newTest();
-        $test->expect($pages === 2, 'paginate pages is 2 for 10 items at 5 per page');
+        $test->expect(2 === $pages, 'paginate pages is 2 for 10 items at 5 per page');
+
         return $test->results();
     }
 
     public function testRememberCachePattern($f3)
     {
-        // Test the remember() logic: get-or-set
+        $subject = new class {
+            use HasCache;
+        };
+        $subject->initHasCache();
+
+        $key      = 'response-test.remember.' . uniqid('', true);
         $calls    = 0;
-        $callback = function () use (&$calls) {
+        $callback = static function() use (&$calls) {
             ++$calls;
 
             return 'computed-value';
         };
 
-        // Simulate first call (cache miss)
-        $calls   = 0;
-        $result1 = $callback();
-        // Simulate second call (cache hit — callback not called)
-        $result2 = 'computed-value'; // would come from cache
+        $result1 = $subject->remember($key, $callback);
+        $result2 = $subject->remember($key, $callback);
 
         $test = $this->newTest();
-        $test->expect($result1 === 'computed-value', 'remember() callback produces value on miss');
-        $test->expect($result2 === 'computed-value', 'remember() returns cached value on hit');
-        $test->expect($calls === 1, 'remember() callback is called only once');
+        $test->expect('computed-value' === $result1, 'remember() callback produces value on miss');
+        $test->expect('computed-value' === $result2, 'remember() returns cached value on hit');
+        $test->expect(1 === $calls, 'remember() callback is called only once');
+
+        $subject->forget($key);
+        $result3 = $subject->remember($key, $callback);
+        $test->expect(2 === $calls, 'forget() invalidates the cached value so the callback runs again');
+        $test->expect('computed-value' === $result3, 'remember() recomputes the value after forget()');
+
+        return $test->results();
+    }
+
+    public function testRememberCachesFalsyValues($f3)
+    {
+        $subject = new class {
+            use HasCache;
+        };
+        $subject->initHasCache();
+
+        $key   = 'response-test.remember-falsy.' . uniqid('', true);
+        $calls = 0;
+        $falsy = static function() use (&$calls) {
+            ++$calls;
+
+            return false;
+        };
+
+        $result1 = $subject->remember($key, $falsy);
+        $result2 = $subject->remember($key, $falsy);
+
+        $test = $this->newTest();
+        $test->expect(false === $result1, 'remember() returns the computed false value on miss');
+        $test->expect(false === $result2, 'remember() returns the cached false value on hit');
+        $test->expect(1 === $calls, 'remember() does not recompute a cached false value');
+
         return $test->results();
     }
 }
