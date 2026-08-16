@@ -16,7 +16,7 @@ use Test\TestGroup;
 final class QueueTest extends TestGroup
 {
     protected $classes = [
-        \Queue\QueueServiceLockingTest::class,
+        \Queue\QueueServiceCoreTest::class,
         \Queue\QueueServiceAttemptsTest::class,
         \Queue\QueueServiceEdgeCasesTest::class,
         \Queue\QueueProgressLoggerTest::class,

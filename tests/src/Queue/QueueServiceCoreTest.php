@@ -21,7 +21,7 @@ use Test\Scenario;
  *
  * @coversNothing
  */
-final class QueueServiceLockingTest extends Scenario
+final class QueueServiceCoreTest extends Scenario
 {
     protected $group = 'Queue Service :: Core Operations';
 
