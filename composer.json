@@ -2,6 +2,7 @@
     "name": "sukarix/sukarix",
     "description": "The Sukarix Framework - Just the Right Amount of Sweetness and Efficiency on Top of Fat-Free",
     "type": "library",
+    "version": "0.4.0",
     "keywords": [
         "framework",
         "sukarix",
@@ -68,7 +69,7 @@
         "rector/rector": "^1.2.10",
         "roave/security-advisories": "dev-latest",
         "squizlabs/php_codesniffer": "^3.13.5",
-        "sukarix/statera": "^v0.3.2",
+        "sukarix/statera": "^v0.4.0",
         "vimeo/psalm": "^6.13.0",
         "wapmorgan/php-deprecation-detector": "^2.0.33"
     },
