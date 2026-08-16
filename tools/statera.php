@@ -33,6 +33,11 @@ $f3->set('LOGS', $libraryRoot . '/logs/');
 $f3->set('DEBUG', 0);
 $f3->set('CACHE', 'folder=' . $libraryRoot . '/tmp/cache/');
 
+// Redis configuration for QueueService tests
+$f3->set('redis.host', '127.0.0.1');
+$f3->set('redis.port', 6379);
+$f3->set('redis.timeout', 2);
+
 // Make sure the runtime directories exist
 foreach (['tmp', 'tmp/cache', 'logs', 'statera'] as $dir) {
     $path = $libraryRoot . '/' . $dir;

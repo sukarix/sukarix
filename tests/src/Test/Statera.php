@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Test;
 
 use Suite\CoreTest;
+use Suite\QueueTest;
 use Sukarix\Statera as SukarixStatera;
 
 /**
@@ -21,6 +22,7 @@ class Statera extends SukarixStatera
     {
         self::setGroups([
             CoreTest::class,
+            QueueTest::class,
         ]);
     }
 }
