@@ -43,6 +43,13 @@ abstract class Action extends Tailored
     protected Response $response;
 
     /**
+     * Set to true in actions reached by external systems that cannot carry a CSRF token,
+     * such as webhooks or telephony gateways. Those endpoints must authenticate their
+     * caller by their own means.
+     */
+    protected bool $csrfExempt = false;
+
+    /**
      * Contains the arguments passed in command line using the format --key=value.
      */
     protected ?array $argv = null;
@@ -79,7 +86,7 @@ abstract class Action extends Tailored
         if ($this->session->isLoggedIn() && $this->f3->get('ALIAS') === $this->f3->get('ALIASES.login')) {
             // @todo : add a reroute handler
             $this->f3->reroute($this->f3->get('ALIASES.dashboard'));
-        } elseif ($this->f3->get('SECURITY.csrf.enabled') && \in_array($this->f3->VERB, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && !$this->session->validateToken()) {
+        } elseif (!$this->csrfExempt && $this->f3->get('SECURITY.csrf.enabled') && \in_array($this->f3->VERB, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && !$this->session->validateToken()) {
             // @todo: add a handler or middleware to handle this
             $this->f3->reroute($this->f3->get('PATH'));
         }

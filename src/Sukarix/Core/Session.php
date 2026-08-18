@@ -16,6 +16,17 @@ class Session extends Tailored
     use HasF3;
     use LogWriter;
 
+    /**
+     * Header carrying the CSRF token, for requests that cannot send it as a parameter.
+     * Fat-Free normalises header names, so this is the casing it exposes in the hive.
+     */
+    public const CSRF_HEADER = 'X-Csrf-Token';
+
+    /**
+     * Request parameter and form field name carrying the CSRF token.
+     */
+    public const CSRF_FIELD = 'csrf_token';
+
     protected $internalSession;
     protected $csrfEnabled;
     protected $csrfExpiry;
@@ -151,13 +162,20 @@ class Session extends Tailored
     }
 
     /**
-     *  Generates a CSRF Token and stores it in the Session.
+     *  Generates a CSRF Token and stores it in the Session, or reuses the current one
+     *  while it is still valid.
+     *
+     *  Reusing the token keeps every form of a page submittable. Minting a new token on
+     *  each call would leave only the last rendered form valid.
      */
     public function generateToken(): string
     {
+        if ($this->isTokenLive()) {
+            return (string) $this->get(self::CSRF_FIELD);
+        }
+
         $token = $this->internalSession->csrf();
-        $this->set('csrf_token', $token);
-        $this->set('csrf_used', false);
+        $this->set(self::CSRF_FIELD, $token);
         $this->set('csrf_valid', true);
         $this->set('csrf_expiry', time() + $this->csrfExpiry);
 
@@ -175,7 +193,11 @@ class Session extends Tailored
     }
 
     /**
-     *  Compares the given token with the value in the Session.
+     *  Compares the token sent with the request against the one held in the Session.
+     *
+     *  The token is read from the X-Csrf-Token header first, then from the request
+     *  parameters. Fat-Free only maps GET, POST and COOKIE into the hive, so PUT, DELETE
+     *  and PATCH requests, along with any request sending a JSON body, must use the header.
      */
     public function validateToken(): bool
     {
@@ -183,42 +205,30 @@ class Session extends Tailored
             return true;
         }
 
-        $errors       = [];
-        $sessionToken = $this->get('csrf_token');
-        $csrfExpiry   = $this->get('csrf_expiry');
+        // Fat-Free normalises header names, so the key is always X-Csrf-Token
+        $sent    = (string) ($this->f3->get('HEADERS.' . self::CSRF_HEADER) ?: $this->f3->get('REQUEST.' . self::CSRF_FIELD));
+        $isValid = $this->isTokenLive() && hash_equals((string) $this->get(self::CSRF_FIELD), $sent);
 
-        // Log the current csrf_used value for debugging
-        $this->logger->debug('CSRF used status at start: ' . var_export($this->get('csrf_used'), true));
-
-        if (!$sessionToken || $this->get('csrf_used') || time() > $csrfExpiry) {
-            $this->set('csrf_valid', false);
-            $errors['csrf_token'] = 'CSRF token used, not set, or expired';
-        } else {
-            $this->set('csrf_used', true);
-            $this->f3->sync('SESSION'); // Ensure session synchronization
-            $this->logger->debug('CSRF used status after setting to true: ' . var_export($this->get('csrf_used'), true));
-
-            $tokenIsValid = $this->f3->get($this->f3->get('VERB') . '.csrf_token') === $sessionToken;
-            if (!$tokenIsValid) {
-                $this->logger->critical(
-                    'Invalid request token provided '
-                    . $this->f3->get($this->f3->get('VERB') . '.csrf_token')
-                    . ' where it should be ' . $sessionToken
-                    . ' IP: ' . $this->f3->get('SERVER.REMOTE_ADDR') . ' User-Agent: ' . $this->f3->get('SERVER.HTTP_USER_AGENT')
-                );
-                $errors['csrf_token'] = 'Invalid CSRF token';
-                $this->set('csrf_valid', false);
-            } else {
-                $this->set('csrf_valid', true);
-            }
+        if (!$isValid) {
+            $this->logger->critical('Invalid CSRF token', [
+                'alias' => $this->f3->get('ALIAS'),
+                'verb'  => $this->f3->get('VERB'),
+                'ip'    => $this->f3->get('IP'),
+            ]);
         }
 
-        // Debugging the final csrf_valid state
-        $this->logger->debug('CSRF valid status at end: ' . var_export($this->get('csrf_valid'), true));
+        $this->set('csrf_valid', $isValid);
+        $this->set('form_errors', $isValid ? [] : [self::CSRF_FIELD => 'Invalid CSRF token']);
 
-        $this->set('form_errors', $errors);
+        return $isValid;
+    }
 
-        return $this->get('csrf_valid');
+    /**
+     *  Tells whether the Session holds a token that has not expired yet.
+     */
+    protected function isTokenLive(): bool
+    {
+        return (bool) $this->get(self::CSRF_FIELD) && time() <= (int) $this->get('csrf_expiry');
     }
 
     protected function initializeSession(?SQL $db, $table, $force, $key)
@@ -239,7 +249,7 @@ class Session extends Tailored
             $this->internalSession = new SQLSession($db, $table, $force, $sessionCallback, $key);
         }
 
-        if (!$this->get('csrf_token')) {
+        if (!$this->get(self::CSRF_FIELD)) {
             $this->generateToken();
         }
     }

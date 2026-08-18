@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Suite;
 
+use Core\InjectorTest;
+use Core\ResponseTest;
+use Core\SessionCsrfTest;
 use Test\TestGroup;
 
 /**
@@ -16,7 +19,8 @@ use Test\TestGroup;
 final class CoreTest extends TestGroup
 {
     protected $classes = [
-        \Core\InjectorTest::class,
-        \Core\ResponseTest::class,
+        InjectorTest::class,
+        ResponseTest::class,
+        SessionCsrfTest::class,
     ];
 }
