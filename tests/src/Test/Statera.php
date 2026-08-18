@@ -6,6 +6,7 @@ namespace Test;
 
 use Suite\CoreTest;
 use Suite\QueueTest;
+use Suite\UtilsTest;
 use Sukarix\Statera as SukarixStatera;
 
 /**
@@ -23,6 +24,7 @@ class Statera extends SukarixStatera
         self::setGroups([
             CoreTest::class,
             QueueTest::class,
+            UtilsTest::class,
         ]);
     }
 }
