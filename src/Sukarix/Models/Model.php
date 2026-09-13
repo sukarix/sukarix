@@ -267,10 +267,10 @@ abstract class Model extends Cortex
             $this->updated_on = Time::db();
         }
         if (method_exists($this, 'onUpdateCleanUp')
-            && \is_callable([$this, 'onCreateCleanUp'])
+            && \is_callable([$this, 'onUpdateCleanUp'])
         ) {
             \call_user_func(
-                [$this, 'onCreateCleanUp']
+                [$this, 'onUpdateCleanUp']
             );
         }
     }
