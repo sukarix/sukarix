@@ -9,6 +9,7 @@ class Environment
     public const CONFIG_KEY  = 'application.environment';
     public const TEST        = 'test';
     public const DEVELOPMENT = 'development';
+    public const STAGING     = 'staging';
     public const PRODUCTION  = 'production';
 
     public static function isProduction(): bool

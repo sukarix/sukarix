@@ -73,7 +73,7 @@ abstract class Boot
 
         if (true !== $this->f3->exists('GET.statera')) {
             $env = getenv('APP_ENV') ?: '';
-            if (Environment::DEVELOPMENT === $env || Environment::PRODUCTION === $env) {
+            if (\in_array($env, [Environment::DEVELOPMENT, Environment::STAGING, Environment::PRODUCTION], true)) {
                 $this->f3->set(Environment::CONFIG_KEY, $env);
             } elseif (str_ends_with(Environment::getHostName(), '.test')) {
                 $this->f3->set(Environment::CONFIG_KEY, Environment::DEVELOPMENT);
