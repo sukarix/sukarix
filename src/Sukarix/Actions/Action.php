@@ -293,7 +293,7 @@ abstract class Action extends Tailored
     protected function parseHeaderAuthorization(): void
     {
         if ($header = $this->f3->get('HEADERS.Authorization')) {
-            $this->headerAuthorization = str_replace('Basic ', '', $header);
+            $this->headerAuthorization = str_replace(['Basic ', 'Bearer '], '', $header);
         }
     }
 
