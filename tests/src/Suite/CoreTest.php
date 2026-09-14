@@ -10,6 +10,7 @@ use Core\SessionCsrfTest;
 use Core\CapabilityTokenTest;
 use Core\CorsTest;
 use Core\ApiActionTest;
+use Core\ModelCleanupTest;
 use Test\TestGroup;
 
 /**
@@ -28,5 +29,6 @@ final class CoreTest extends TestGroup
         CapabilityTokenTest::class,
         CorsTest::class,
         ApiActionTest::class,
+        ModelCleanupTest::class,
     ];
 }
