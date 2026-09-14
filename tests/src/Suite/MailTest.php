@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Suite;
 
 use Mail\MailSenderTest;
+use Mail\TrackTest;
 use Test\TestGroup;
 
 /**
@@ -18,5 +19,6 @@ final class MailTest extends TestGroup
 {
     protected $classes = [
         MailSenderTest::class,
+        TrackTest::class,
     ];
 }
