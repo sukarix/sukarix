@@ -7,6 +7,8 @@ namespace Suite;
 use Core\InjectorTest;
 use Core\ResponseTest;
 use Core\SessionCsrfTest;
+use Core\CorsTest;
+use Core\ApiActionTest;
 use Test\TestGroup;
 
 /**
@@ -22,5 +24,7 @@ final class CoreTest extends TestGroup
         InjectorTest::class,
         ResponseTest::class,
         SessionCsrfTest::class,
+        CorsTest::class,
+        ApiActionTest::class,
     ];
 }

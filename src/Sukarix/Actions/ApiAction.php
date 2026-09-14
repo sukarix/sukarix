@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Sukarix\Actions;
+
+// Base for stateless JSON API endpoints: CSRF-exempt, JSON envelopes throughout.
+abstract class ApiAction extends Action
+{
+    protected bool $csrfExempt = true;
+
+    public function onAccessAuthorizeDeny($route, $subject): void
+    {
+        $this->logger->warning('Access denied to route ' . $route . ' for subject ' . ($subject ?: 'unknown'));
+        $this->error('Access denied', 403);
+    }
+
+    // CORS preflight when origins are configured, a plain 204 otherwise.
+    public function options(): void
+    {
+        $origins = (array) ($this->f3->get('api.cors.origins') ?: []);
+        if ([] === $origins || !\Sukarix\Http\Cors::handle($this->f3, $origins)) {
+            http_response_code(204);
+        }
+    }
+
+    // ONERROR handler for API routes; register it from the bootstrap for the API prefix.
+    public static function onError(\Base $f3): void
+    {
+        $status = (int) $f3->get('ERROR.code');
+        header('Content-Type: application/json; charset=utf-8', true, $status);
+        echo json_encode([
+            'success' => false,
+            'message' => $f3->get('ERROR.text'),
+            'status'  => $status,
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+}
