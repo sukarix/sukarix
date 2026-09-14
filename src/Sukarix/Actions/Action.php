@@ -209,7 +209,19 @@ abstract class Action extends Tailored
      */
     public function getDecodedBody(): array
     {
-        return json_decode($this->f3->get('BODY'), true, 512, JSON_THROW_ON_ERROR);
+        $body = (string) $this->f3->get('BODY');
+        if ('' !== trim($body)) {
+            $first = substr(ltrim($body), 0, 1);
+            if ('{' === $first || '[' === $first) {
+                return json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+            }
+            // Form-encoded body (HTML forms, f3 mock arrays).
+            parse_str($body, $form);
+
+            return $form;
+        }
+
+        return (array) $this->f3->get('POST');
     }
 
     /**
