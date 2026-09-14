@@ -11,7 +11,7 @@ use Sukarix\Behaviours\HasF3;
 use Sukarix\Behaviours\LogWriter;
 use Sukarix\Models\User;
 
-class Session extends Tailored
+class Session extends Tailored implements SessionInterface
 {
     use HasF3;
     use LogWriter;
