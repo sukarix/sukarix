@@ -16,10 +16,7 @@ trait HasSession
 
     public function initHasSession(): void
     {
-        // Boot skips prepareSession() on a stateless route. Resolving the alias
-        // here would build a session anyway and open one behind that route's
-        // back, so take the prepared session and otherwise stay without one.
-        // Action already guards every call it makes on $this->session.
+        // No session on a stateless route: resolving the alias would build one anyway.
         $this->session = \Registry::exists('session') ? Injector::instance()->get('session') : null;
     }
 }

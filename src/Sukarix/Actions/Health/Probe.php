@@ -47,9 +47,7 @@ class Probe extends ApiAction
             $redis = new \Redis();
             $redis->connect($host, 6379, 0.5);
 
-            // phpredis returns true for an argument-less PING; only the
-            // older/raw form answers the "+PONG" status string. Comparing
-            // against 'PONG' alone made every readiness check fail.
+            // phpredis returns true for a bare PING; only the raw form says "+PONG".
             $pong = $redis->ping();
 
             return true === $pong || \in_array($pong, ['PONG', '+PONG'], true);

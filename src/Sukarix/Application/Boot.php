@@ -67,9 +67,7 @@ abstract class Boot
         $this->session = new $className(\Registry::get('db'), $this->f3->get('session.table'), false);
         \Registry::set('session', $this->session);
 
-        // Helpers and actions take the session off the Injector, which caches
-        // whatever it resolves. Registering it here keeps that cache from
-        // holding a session built earlier, which the Registry cannot undo.
+        // Injector caches on resolve; set it here so it never caches a stale session.
         Injector::instance()->set('session', $this->session);
     }
 
