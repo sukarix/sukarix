@@ -61,6 +61,44 @@ class MailSender extends Tailored
         return $this->smtpSend(null, $to, $title, $subject, $message, $messageId);
     }
 
+    /**
+     * Check that the configured SMTP server accepts connections.
+     */
+    protected function smtpIsReachable(): bool
+    {
+        $host = (string) $this->f3->get('mailer.smtp.host');
+        $port = (int) ($this->f3->get('mailer.smtp.port') ?: 25);
+
+        if ('' === $host) {
+            return false;
+        }
+
+        // A refused connection is the answer this asks for, not a warning in the log.
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            $socket = fsockopen(mb_strtolower($host), $port, $errno, $error, (float) $this->smtpTimeout());
+        } finally {
+            restore_error_handler();
+        }
+
+        if (!$socket) {
+            return false;
+        }
+
+        fclose($socket);
+
+        return true;
+    }
+
+    /**
+     * Seconds to wait for the server to answer.
+     */
+    protected function smtpTimeout(): int
+    {
+        return (int) ($this->f3->get('mailer.smtp.timeout') ?: 2);
+    }
+
     protected function smtpSend($from, $to, $title, $subject, $message, $messageId): bool
     {
         if (\is_array($to)) {
@@ -80,6 +118,17 @@ class MailSender extends Tailored
         $this->mailer->setHTML($message);
         $this->mailer->set('Message-Id', $messageId);
 
+        // The SMTP transport aborts the whole request when the server cannot be
+        // reached, so ask first and report the failure to the caller.
+        if (!$this->smtpIsReachable()) {
+            $this->logger->error('Sending email failed, the SMTP server is unreachable', [
+                'host' => $this->f3->get('mailer.smtp.host'),
+                'port' => $this->f3->get('mailer.smtp.port'),
+            ]);
+
+            return false;
+        }
+
         $sent = $this->mailer->send($subject, Environment::isNotProduction());
 
         if (false !== $sent && Environment::isNotProduction()) {
@@ -91,7 +140,7 @@ class MailSender extends Tailored
 
         $this->logger->info('Sending email | Status: ' . ($sent ? 'true' : 'false') . " | Log:\n" . $this->mailer->log());
 
-        return (bool) $sent;
+        return (true === $sent) ? $messageId : $sent;
     }
 
     /**

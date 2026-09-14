@@ -32,6 +32,45 @@ final class MailSenderTest extends Scenario
         return $test->results();
     }
 
+    public function testUnreachableServerIsReportedNotFatal($f3)
+    {
+        $f3->set('mailer.smtp.host', 'does-not-exist.invalid');
+        $f3->set('mailer.smtp.port', 2525);
+
+        $sender = $this->newSender();
+        $answer = $sender->sendTo('noreply@example.org', 'someone@example.org');
+
+        $test = $this->newTest();
+        $test->expect(false === $answer, 'an unreachable server answers false instead of aborting the request');
+        $test->expect(!$sender->recorder()->sent, 'the transport is never asked to send');
+
+        return $test->results();
+    }
+
+    public function testAMissingHostIsNotReachable($f3)
+    {
+        $f3->set('mailer.smtp.host', '');
+
+        $test = $this->newTest();
+        $test->expect(!$this->newSender()->reachable(), 'an empty host is not reachable');
+
+        return $test->results();
+    }
+
+    public function testTimeoutFallsBackWhenUnset($f3)
+    {
+        $f3->clear('mailer.smtp.timeout');
+        $sender = $this->newSender();
+
+        $test = $this->newTest();
+        $test->expect(2 === $sender->timeout(), 'the wait falls back to two seconds');
+
+        $f3->set('mailer.smtp.timeout', 5);
+        $test->expect(5 === $sender->timeout(), 'a configured wait is used');
+
+        return $test->results();
+    }
+
     /**
      * A sender whose transport records what it was asked to do.
      */
@@ -57,6 +96,15 @@ final class MailSenderTest extends Scenario
                 return $this->smtpSend($from, $to, 'title', 'subject', 'message', '<id@example.org>');
             }
 
+            public function reachable(): bool
+            {
+                return $this->smtpIsReachable();
+            }
+
+            public function timeout(): int
+            {
+                return $this->smtpTimeout();
+            }
         };
     }
 }
