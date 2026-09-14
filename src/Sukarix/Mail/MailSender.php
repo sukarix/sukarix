@@ -72,7 +72,10 @@ class MailSender extends Tailored
         }
 
         if (null !== $from) {
-            $this->mailer->setFrom($from);
+            // A relay authenticates as one identity and sends as another, so the
+            // sender name belongs on the message. Without it the mail arrives
+            // showing a bare address.
+            $this->mailer->setFrom($from, $this->f3->get('mailer.from_name'));
         }
         $this->mailer->setHTML($message);
         $this->mailer->set('Message-Id', $messageId);
