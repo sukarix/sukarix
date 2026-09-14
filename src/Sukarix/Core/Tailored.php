@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sukarix\Core;
 
 abstract class Tailored extends \Prefab

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Sukarix\Validation;
 
 use Sukarix\Behaviours\HasF3;
