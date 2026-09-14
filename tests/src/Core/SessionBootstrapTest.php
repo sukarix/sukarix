@@ -24,11 +24,11 @@ final class SessionBootstrapTest extends Scenario
 
     public function testPrepareSessionReplacesASessionTheInjectorAlreadyCached($f3)
     {
-        $test = $this->newTest();
+        $test  = $this->newTest();
+        $saved = $this->takeSessionAside();
 
         $f3->set('classes.session', Session::class);
         $f3->set('session.table', 'CACHE');
-        $this->resetInjector();
 
         // Constructing a Helper before prepareSession() makes the Injector
         // resolve a session of its own and cache it.
@@ -44,7 +44,7 @@ final class SessionBootstrapTest extends Scenario
         $test->expect($early !== $resolved, 'prepareSession() replaces the session the Injector cached earlier');
         $test->expect(\Registry::get('session') === $resolved, 'the Injector and the Registry hand out the same session');
 
-        $this->resetInjector();
+        $this->putSessionBack($saved);
 
         return $test->results();
     }
@@ -85,13 +85,65 @@ final class SessionBootstrapTest extends Scenario
         return $test->results();
     }
 
-    private function resetInjector(): void
+    public function testNothingBuildsASessionWhenTheRouteIsStateless($f3)
+    {
+        $test  = $this->newTest();
+        $saved = $this->takeSessionAside();
+
+        $f3->set('classes.session', Session::class);
+        $f3->set('session.table', 'CACHE');
+
+        // A stateless route never reaches prepareSession(), so nothing is
+        // registered and a consumer built along the way must stay without one.
+        $subject = new SessionConsumer();
+        $subject->initHasSession();
+
+        $test->expect(null === $subject->session(), 'a consumer stays without a session when none was prepared');
+        $test->expect(false === \Registry::exists('session'), 'resolving it did not open a session behind the route');
+
+        $this->putSessionBack($saved);
+
+        return $test->results();
+    }
+
+    /**
+     * These scenarios need the session unregistered, which is not how the rest
+     * of the suite runs, so the surrounding state is put back afterwards.
+     */
+    private function takeSessionAside(): array
+    {
+        $saved = [];
+        foreach (['session', Injector::class, Session::class] as $key) {
+            if (\Registry::exists($key)) {
+                $saved[$key] = \Registry::get($key);
+                \Registry::clear($key);
+            }
+        }
+
+        return $saved;
+    }
+
+    private function putSessionBack(array $saved): void
     {
         foreach (['session', Injector::class, Session::class] as $key) {
             if (\Registry::exists($key)) {
                 \Registry::clear($key);
             }
+
+            if (\array_key_exists($key, $saved)) {
+                \Registry::set($key, $saved[$key]);
+            }
         }
+    }
+}
+
+final class SessionConsumer
+{
+    use \Sukarix\Behaviours\HasSession;
+
+    public function session()
+    {
+        return $this->session;
     }
 }
 
