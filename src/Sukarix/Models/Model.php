@@ -145,6 +145,23 @@ abstract class Model extends Cortex
     }
 
     /**
+     * Narrow what a query returns.
+     *
+     * Cortex documents find() as returning an array of records; it returns a
+     * CortexCollection, and callers use the collection methods an array lacks.
+     *
+     * @param null|array $filter
+     * @param null|array $options
+     * @param int        $ttl
+     *
+     * @return \DB\CortexCollection|false
+     */
+    public function find($filter = null, ?array $options = null, $ttl = 0)
+    {
+        return parent::find($filter, $options, $ttl);
+    }
+
+    /**
      * Magic setter that writes to a DTO buffer when no database is configured.
      *
      * @param mixed $key

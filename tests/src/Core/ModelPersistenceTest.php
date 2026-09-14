@@ -106,6 +106,21 @@ final class ModelPersistenceTest extends Scenario
         return $test->results();
     }
 
+    public function testFindReturnsACollection($f3)
+    {
+        $model = $this->newModel();
+        $model->name = 'findable';
+        $model->save();
+
+        $found = $this->newModel()->find(['name = ?', 'findable']);
+
+        $test = $this->newTest();
+        $test->expect($found instanceof \DB\CortexCollection, 'find answers with a collection, not an array');
+        $test->expect(1 === \count($found->castAll()), 'the collection carries the row that was stored');
+
+        return $test->results();
+    }
+
     /**
      * A model over a scratch database, created fresh for each scenario.
      */
