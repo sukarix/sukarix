@@ -13,6 +13,7 @@ use Core\CapabilityTokenTest;
 use Core\CorsTest;
 use Core\EnvironmentOverrideTest;
 use Core\ApiActionTest;
+use Core\HealthProbeTest;
 use Core\ModelCleanupTest;
 use Core\ModelPersistenceTest;
 use Core\OrmDeprecationTest;
@@ -39,6 +40,7 @@ final class CoreTest extends TestGroup
         CorsTest::class,
         EnvironmentOverrideTest::class,
         ApiActionTest::class,
+        HealthProbeTest::class,
         ModelCleanupTest::class,
         ModelPersistenceTest::class,
         OrmDeprecationTest::class,

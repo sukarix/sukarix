@@ -32,6 +32,10 @@ $f3->set('TEMP', $libraryRoot . '/tmp/');
 $f3->set('LOGS', $libraryRoot . '/logs/');
 $f3->set('DEBUG', 0);
 $f3->set('CACHE', 'folder=' . $libraryRoot . '/tmp/cache/');
+// So Environment::isTest() reports true here the same way it does for a
+// consuming application's own test bootstrap; code such as Response::json()
+// branches on it, and without this every such call exits the whole run.
+$f3->set('application.environment', \Sukarix\Configuration\Environment::TEST);
 
 // Injector aliases. Anything constructing an Action pulls the access behaviour,
 // which resolves this alias.
