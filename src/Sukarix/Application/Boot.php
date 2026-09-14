@@ -8,7 +8,7 @@ use DB\SQL;
 use Sukarix\Behaviours\LogWriter;
 use Sukarix\Configuration\Environment;
 use Sukarix\Core\Injector;
-use Sukarix\Core\Session;
+use Sukarix\Core\SessionInterface;
 
 abstract class Boot
 {
@@ -26,7 +26,7 @@ abstract class Boot
      */
     protected $debug;
 
-    protected ?Session $session = null;
+    protected ?SessionInterface $session = null;
 
     protected bool $logSession = false;
 
@@ -49,17 +49,6 @@ abstract class Boot
         $this->setupLogging();
     }
 
-    // Forwards an incoming X-Request-Id or mints one, for log/trace correlation.
-    protected function assignRequestId(): void
-    {
-        $incoming = (string) ($this->f3->get('HEADERS.X-Request-Id') ?: ($_SERVER['HTTP_X_REQUEST_ID'] ?? ''));
-        $requestId = '' !== $incoming ? $incoming : bin2hex(random_bytes(8));
-        $this->f3->set('application.request_id', $requestId);
-        if (\PHP_SAPI !== 'cli' && !headers_sent()) {
-            header('X-Request-Id: ' . $requestId);
-        }
-    }
-
     public function prepareSession(): void
     {
         // store the session into sqlite database file
@@ -76,6 +65,17 @@ abstract class Boot
         // start the framework
         $this->f3->run();
         $this->logPerformanceMetrics();
+    }
+
+    // Forwards an incoming X-Request-Id or mints one, for log/trace correlation.
+    protected function assignRequestId(): void
+    {
+        $incoming  = (string) ($this->f3->get('HEADERS.X-Request-Id') ?: ($_SERVER['HTTP_X_REQUEST_ID'] ?? ''));
+        $requestId = '' !== $incoming ? $incoming : bin2hex(random_bytes(8));
+        $this->f3->set('application.request_id', $requestId);
+        if (\PHP_SAPI !== 'cli' && !headers_sent()) {
+            header('X-Request-Id: ' . $requestId);
+        }
     }
 
     protected function detectEnvironment(): void

@@ -52,7 +52,7 @@ class Bootstrap extends Boot
         if (\is_string($prefixes)) {
             $prefixes = array_map(static fn ($item) => mb_trim($item), explode(',', $prefixes));
         }
-        $path     = (string) $this->f3->get('PATH');
+        $path = (string) $this->f3->get('PATH');
 
         foreach ((array) $prefixes as $prefix) {
             if ('' === (string) $prefix) {
@@ -74,7 +74,7 @@ class Bootstrap extends Boot
         $this->f3->config('config/default.ini');
 
         // Load additional configs from CONFIGS setting
-        $this->f3->get('CONFIGS') && array_map(function($file) {
+        $this->f3->get('CONFIGS') && array_map(function($file): void {
             $this->f3->config('config/' . mb_trim($file) . '.ini');
         }, $this->f3->get('CONFIGS'));
 
@@ -147,13 +147,11 @@ class Bootstrap extends Boot
         if (!$this->isCli && empty($this->debug)) {
             $this->f3->set(
                 'ONERROR',
-                function(): void {
-                    header('Expires:  ' . Time::http(time() + \Base::instance()->get('error.ttl')));
-                    if ('404' === \Base::instance()->get('ERROR.code')) {
-                        include_once 'templates/error/404.phtml';
-                    } else {
-                        include_once 'templates/error/error.phtml';
-                    }
+                static function(): void {
+                    $f3 = \Base::instance();
+                    header('Expires:  ' . Time::http(time() + $f3->get('error.ttl')));
+                    // Resolved through the UI search paths, so it does not depend on the working directory.
+                    echo \View::instance()->render('error/' . ('404' === (string) $f3->get('ERROR.code') ? '404' : 'error') . '.phtml');
                 }
             );
         }
