@@ -50,7 +50,7 @@ class MailSender extends Tailored
     public function send($template, $vars, $to, $title, $subject): bool
     {
         $messageId         = $this->generateId();
-        $vars['date']      = date('%A %d %B %A à %T');
+        $vars['date']      = date('l j F Y H:i:s');
         $vars['messageId'] = mb_strstr(mb_substr($messageId, 1, -1), '@', true);
         $vars['SCHEME']    = $this->f3->get('SCHEME');
         $vars['HOST']      = Environment::getHostName();
