@@ -51,4 +51,48 @@ final class ApiActionTest extends Scenario
 
         return $test->results();
     }
+
+    public function testBearerTokenMatches($f3)
+    {
+        $f3->set('HEADERS.Authorization', 'Bearer s3cret');
+        $action = $this->bearerChecker();
+
+        $test = $this->newTest();
+        $test->expect($action->check('s3cret'), 'the matching key is accepted');
+        $test->expect(!$action->check('other'), 'a different key is rejected');
+
+        return $test->results();
+    }
+
+    public function testEmptyExpectedKeyNeverMatches($f3)
+    {
+        $f3->set('HEADERS.Authorization', 'Bearer ');
+        $action = $this->bearerChecker();
+
+        $test = $this->newTest();
+        $test->expect(!$action->check(''), 'an unset expected key never matches, even a bare "Bearer "');
+
+        return $test->results();
+    }
+
+    public function testNonBearerAuthorizationIsRejected($f3)
+    {
+        $f3->set('HEADERS.Authorization', 'Basic s3cret');
+        $action = $this->bearerChecker();
+
+        $test = $this->newTest();
+        $test->expect(!$action->check('s3cret'), 'a non-Bearer scheme is rejected');
+
+        return $test->results();
+    }
+
+    private function bearerChecker(): ApiAction
+    {
+        return new class extends ApiAction {
+            public function check(string $expected): bool
+            {
+                return $this->bearerTokenMatches($expected);
+            }
+        };
+    }
 }

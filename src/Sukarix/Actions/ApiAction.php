@@ -35,4 +35,22 @@ abstract class ApiAction extends Action
             'status'  => $status,
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
+
+    /**
+     * Constant-time check of the Authorization header against a static
+     * bearer token, for machine callers authenticating with one long-lived
+     * key. An empty $expected always fails - hash_equals('', '') is true,
+     * so a caller sending a bare "Bearer " would otherwise authenticate
+     * against an unset key.
+     */
+    protected function bearerTokenMatches(string $expected): bool
+    {
+        if ('' === $expected) {
+            return false;
+        }
+
+        $provided = (string) ($this->f3->get('HEADERS.Authorization') ?? '');
+
+        return str_starts_with($provided, 'Bearer ') && hash_equals($expected, substr($provided, 7));
+    }
 }
