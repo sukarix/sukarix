@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Sukarix\Http;
 
+use Sukarix\Configuration\Environment;
+
 /**
  * Simple Response Handler for Sukarix Framework
  * Following F3 philosophy - lightweight and practical.
@@ -26,8 +28,21 @@ class Response
     {
         header('Content-Type: application/json; charset=utf-8', true, $status);
         echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        if (!Environment::isTest()) {
+            exit;
+        }
+    }
 
-        exit;
+    /**
+     * Like json(), but returns the body instead of echoing and exiting.
+     *
+     * @param mixed $data
+     */
+    public function renderJson($data, int $status = 200): string
+    {
+        http_response_code($status);
+
+        return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 
     /**
