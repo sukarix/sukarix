@@ -59,7 +59,8 @@
         "respect/validation": "^2.4.10",
         "tracy/tracy": "^v2.11.0",
         "sukarix/f3-access": "^v1.2.3",
-        "xfra35/f3-multilang": "^v1.3.2"
+        "xfra35/f3-multilang": "^v1.3.2",
+        "php-amqplib/php-amqplib": "^3.7"
     },
     "require-dev": {
         "ext-xdebug": "*",
