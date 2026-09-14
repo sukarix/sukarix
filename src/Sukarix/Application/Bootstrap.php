@@ -41,13 +41,24 @@ class Bootstrap extends Boot
     // True for paths under SECURITY.stateless.prefixes (default /api) — no session is opened for these.
     protected function isStatelessRoute(): bool
     {
-        $prefixes = $this->f3->get('SECURITY.stateless.prefixes') ?: ['/api'];
+        // A declared key wins even when it is empty: an ini entry with nothing after
+        // the equals sign reads as null, and that is how an application says no route
+        // is session free.
+        // exists() answers false for a null value, so read the parent to tell a key
+        // that was declared empty from one that was never written at all.
+        $stateless = (array) $this->f3->get('SECURITY.stateless');
+        $prefixes  = \array_key_exists('prefixes', $stateless) ? (array) $stateless['prefixes'] : ['/api'];
+
         if (\is_string($prefixes)) {
             $prefixes = array_map(static fn ($item) => mb_trim($item), explode(',', $prefixes));
         }
         $path     = (string) $this->f3->get('PATH');
 
         foreach ((array) $prefixes as $prefix) {
+            if ('' === (string) $prefix) {
+                continue;
+            }
+
             if (str_starts_with($path, (string) $prefix)) {
                 return true;
             }

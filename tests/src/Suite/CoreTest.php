@@ -15,6 +15,7 @@ use Core\ApiActionTest;
 use Core\ModelCleanupTest;
 use Core\ModelPersistenceTest;
 use Core\OrmDeprecationTest;
+use Core\StatelessRouteTest;
 use Test\TestGroup;
 
 /**
@@ -38,5 +39,6 @@ final class CoreTest extends TestGroup
         ModelCleanupTest::class,
         ModelPersistenceTest::class,
         OrmDeprecationTest::class,
+        StatelessRouteTest::class,
     ];
 }
