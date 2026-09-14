@@ -33,6 +33,15 @@ $f3->set('LOGS', $libraryRoot . '/logs/');
 $f3->set('DEBUG', 0);
 $f3->set('CACHE', 'folder=' . $libraryRoot . '/tmp/cache/');
 
+// Injector aliases. Anything constructing an Action pulls the access behaviour,
+// which resolves this alias.
+$f3->set('classes', [
+    'access' => \Access::class,
+    'i18n'   => \Sukarix\Helpers\I18n::class,
+    'assets' => \Sukarix\Helpers\Assets::class,
+    'html'   => \Sukarix\Helpers\HTML::class,
+]);
+
 // Redis configuration for QueueService tests
 $f3->set('redis.host', '127.0.0.1');
 $f3->set('redis.port', 6379);
