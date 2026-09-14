@@ -25,7 +25,7 @@ abstract class Boot
      */
     protected $debug;
 
-    protected Session $session;
+    protected ?Session $session = null;
 
     protected bool $logSession = false;
 

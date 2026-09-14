@@ -29,11 +29,31 @@ class Bootstrap extends Boot
 
         $this->handleException();
         $this->createDatabaseConnection();
-        $this->prepareSession();
+        if (!$this->isStatelessRoute()) {
+            $this->prepareSession();
+        }
         $this->loadAppSetting();
         $this->detectCli();
         $this->loadRoutesAndAccess();
         $this->detectMultiLanguage();
+    }
+
+    // True for paths under SECURITY.stateless.prefixes (default /api) — no session is opened for these.
+    protected function isStatelessRoute(): bool
+    {
+        $prefixes = $this->f3->get('SECURITY.stateless.prefixes') ?: ['/api'];
+        if (\is_string($prefixes)) {
+            $prefixes = array_map(static fn ($item) => mb_trim($item), explode(',', $prefixes));
+        }
+        $path     = (string) $this->f3->get('PATH');
+
+        foreach ((array) $prefixes as $prefix) {
+            if (str_starts_with($path, (string) $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function loadConfiguration(): void
@@ -94,7 +114,9 @@ class Bootstrap extends Boot
 
     protected function loadAppSetting(): void
     {
-        $this->f3->set('LANGUAGE', $this->session->get('locale'));
+        if (null !== $this->session) {
+            $this->f3->set('LANGUAGE', $this->session->get('locale'));
+        }
     }
 
     protected function loadRoutesAndAccess(): void

@@ -83,11 +83,12 @@ abstract class Action extends Tailored
                 $this->onAccessAuthorizeDeny($route, $subject);
             }
         );
-        if ($this->session->isLoggedIn() && $this->f3->get('ALIAS') === $this->f3->get('ALIASES.login')) {
+        if (null !== $this->session && $this->session->isLoggedIn() && $this->f3->get('ALIAS') === $this->f3->get('ALIASES.login')) {
             // @todo : add a reroute handler
             $this->f3->reroute($this->f3->get('ALIASES.dashboard'));
-        } elseif (!$this->csrfExempt && $this->f3->get('SECURITY.csrf.enabled') && \in_array($this->f3->VERB, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && !$this->session->validateToken()) {
-            // @todo: add a handler or middleware to handle this
+        } elseif (null !== $this->session && !$this->csrfExempt && $this->f3->get('SECURITY.csrf.enabled') && \in_array($this->f3->VERB, ['POST', 'PUT', 'DELETE', 'PATCH'], true) && !$this->session->validateToken()) {
+            // Surface the bounce instead of silently pretending success.
+            $this->session->set('csrf_bounce', 'Your form session expired. Please try again.');
             $this->f3->reroute($this->f3->get('PATH'));
         }
         // Rerouted paged uri having the page value less than one
@@ -314,7 +315,7 @@ abstract class Action extends Tailored
 
     protected function getRole(): string
     {
-        if ($this->session->getRole()) {
+        if (null !== $this->session && $this->session->getRole()) {
             return $this->session->getRole();
         }
         if ($this->isApiUserVerified()) {
