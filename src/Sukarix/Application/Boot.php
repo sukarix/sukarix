@@ -43,8 +43,20 @@ abstract class Boot
 
         // start configuration F3 framework from this point
         $this->loadConfiguration();
+        $this->assignRequestId();
         $this->prepareCache();
         $this->setupLogging();
+    }
+
+    // Forwards an incoming X-Request-Id or mints one, for log/trace correlation.
+    protected function assignRequestId(): void
+    {
+        $incoming = (string) ($this->f3->get('HEADERS.X-Request-Id') ?: ($_SERVER['HTTP_X_REQUEST_ID'] ?? ''));
+        $requestId = '' !== $incoming ? $incoming : bin2hex(random_bytes(8));
+        $this->f3->set('application.request_id', $requestId);
+        if (\PHP_SAPI !== 'cli' && !headers_sent()) {
+            header('X-Request-Id: ' . $requestId);
+        }
     }
 
     public function prepareSession(): void
