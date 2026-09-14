@@ -32,6 +32,27 @@ final class MailSenderTest extends Scenario
         return $test->results();
     }
 
+    public function testASentMailAnswersTrue($f3)
+    {
+        // A reachable server: the loopback listener the test opens for itself.
+        $listener = stream_socket_server('tcp://127.0.0.1:0', $errno, $error);
+        $port     = (int) explode(':', (string) stream_socket_get_name($listener, false))[1];
+
+        $f3->set('mailer.smtp.host', '127.0.0.1');
+        $f3->set('mailer.smtp.port', $port);
+
+        $sender = $this->newSender();
+        $answer = $sender->sendTo('noreply@example.org', 'someone@example.org');
+
+        fclose($listener);
+
+        $test = $this->newTest();
+        $test->expect(true === $answer, 'a sent mail answers with a boolean, not the message id');
+        $test->expect($sender->recorder()->sent, 'the transport was asked to send');
+
+        return $test->results();
+    }
+
     public function testUnreachableServerIsReportedNotFatal($f3)
     {
         $f3->set('mailer.smtp.host', 'does-not-exist.invalid');

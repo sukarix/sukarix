@@ -147,7 +147,7 @@ class MailSender extends Tailored
 
         $this->logger->info('Sending email | Status: ' . ($sent ? 'true' : 'false') . " | Log:\n" . $this->mailer->log());
 
-        return (true === $sent) ? $messageId : $sent;
+        return (bool) $sent;
     }
 
     /**
