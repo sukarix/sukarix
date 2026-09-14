@@ -69,8 +69,42 @@ class Bootstrap extends Boot
 
         $this->f3->config('config/config-' . $this->environment . '.ini');
 
+        $this->applyEnvironmentOverrides();
+
         // custom error handler if debugging
         $this->debug = $this->f3->get('DEBUG');
+    }
+
+    /**
+     * Let the environment have the last word on the settings a deployment owns.
+     *
+     * The configuration declares which variable stands in for which key:
+     *
+     *     [environment]
+     *     APP_SMTP_HOST = mailer.smtp.host
+     *
+     * A variable that is unset or empty leaves the configured value alone, so a
+     * deployment overrides only what it needs to and secrets stay out of the files
+     * that are committed.
+     */
+    protected function applyEnvironmentOverrides(): void
+    {
+        $overrides = $this->f3->get('environment');
+
+        if (!\is_array($overrides)) {
+            return;
+        }
+
+        foreach ($overrides as $variable => $key) {
+            if (!\is_string($key) || '' === $key) {
+                continue;
+            }
+
+            $value = getenv((string) $variable);
+            if (false !== $value && '' !== $value) {
+                $this->f3->set($key, $value);
+            }
+        }
     }
 
     protected function handleException(): void

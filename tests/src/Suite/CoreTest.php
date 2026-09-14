@@ -10,6 +10,7 @@ use Core\SessionContractTest;
 use Core\SessionCsrfTest;
 use Core\CapabilityTokenTest;
 use Core\CorsTest;
+use Core\EnvironmentOverrideTest;
 use Core\ApiActionTest;
 use Core\ModelCleanupTest;
 use Core\ModelPersistenceTest;
@@ -31,6 +32,7 @@ final class CoreTest extends TestGroup
         SessionContractTest::class,
         CapabilityTokenTest::class,
         CorsTest::class,
+        EnvironmentOverrideTest::class,
         ApiActionTest::class,
         ModelCleanupTest::class,
         ModelPersistenceTest::class,
