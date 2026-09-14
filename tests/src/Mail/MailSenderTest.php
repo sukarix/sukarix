@@ -71,6 +71,37 @@ final class MailSenderTest extends Scenario
         return $test->results();
     }
 
+    public function testTheSameExceptionIsOnlyReportedOnce($f3)
+    {
+        $f3->set('LOGS', 'tmp/');
+        $f3->set('mailer.smtp.host', 'does-not-exist.invalid');
+        $f3->set('debug.email', 'devops@example.org');
+
+        $exception = new \RuntimeException('the same failure');
+        foreach (glob($f3->get('ROOT') . '/' . $f3->get('LOGS') . 'email-sent-*') as $stale) {
+            unlink($stale);
+        }
+
+        $sender = $this->newSender();
+        $sender->sendExceptionEmail($exception);
+        $marks = glob($f3->get('ROOT') . '/' . $f3->get('LOGS') . 'email-sent-*');
+
+        $test = $this->newTest();
+        $test->expect(1 === \count($marks), 'the first report leaves one snooze mark');
+
+        $sender->sendExceptionEmail($exception);
+        $test->expect(
+            1 === \count(glob($f3->get('ROOT') . '/' . $f3->get('LOGS') . 'email-sent-*')),
+            'a repeat of the same exception is snoozed rather than reported again'
+        );
+
+        foreach ($marks as $mark) {
+            unlink($mark);
+        }
+
+        return $test->results();
+    }
+
     /**
      * A sender whose transport records what it was asked to do.
      */

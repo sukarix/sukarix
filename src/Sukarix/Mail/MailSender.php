@@ -35,11 +35,14 @@ class MailSender extends Tailored
      */
     public function sendExceptionEmail($exception): void
     {
-        $hash         = mb_substr(md5(preg_replace('~(Resource id #)\d+~', '$1', $exception)), 0, 10);
+        // The hash only groups repeats of the same exception, it is not a signature.
+        $hash         = mb_substr(hash('xxh128', (string) preg_replace('~(Resource id #)\d+~', '$1', (string) $exception)), 0, 10);
         $mailSentPath = $this->f3->get('ROOT') . '/' . $this->f3->get('LOGS') . 'email-sent-' . $hash;
         $snooze       = strtotime('1 day') - time();
         $messageId    = $this->generateId();
-        if (@filemtime($mailSentPath) + $snooze < time() && @file_put_contents($mailSentPath, 'sent')) {
+        $lastSent     = is_file($mailSentPath) ? (int) filemtime($mailSentPath) : 0;
+
+        if ($lastSent + $snooze < time() && false !== file_put_contents($mailSentPath, 'sent')) {
             $this->f3->set('mailer.from_name', 'Application Debugger');
             $subject = 'PHP: An error occurred on server ' . Environment::getHostName() . " ERROR ID '{$hash}'";
             $message = 'An error occurred on <b>' . Environment::getHostName() . '</b><br />' . nl2br($exception->getTraceAsString());
