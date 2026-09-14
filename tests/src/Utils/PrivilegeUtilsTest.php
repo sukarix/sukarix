@@ -26,8 +26,29 @@ final class PrivilegeUtilsTest extends Scenario
 
         $test = $this->newTest();
         $test->expect(['rooms', 'users'] === array_keys($privileges), 'the groups are the action namespaces, sorted');
-        $test->expect(['add', 'index'] === $privileges['rooms'], 'the actions of a group are sorted');
+        $test->expect(['add', 'index', 'presentations'] === $privileges['rooms'], 'the actions of a group are sorted');
         $test->expect(['index'] === $privileges['users'], 'each group lists only its own actions');
+
+        return $test->results();
+    }
+
+    public function testClassesNestedDeeperShareOnePrivilege($f3)
+    {
+        $privileges = PrivilegeUtils::listSystemPrivileges(
+            $this->fixtureRoot(),
+            'Fixtures\\Actions',
+            'Fixtures\\Actions\\RequirePrivilegeTrait'
+        );
+
+        $test = $this->newTest();
+        $test->expect(
+            \in_array('presentations', $privileges['rooms'], true),
+            'a resource in its own namespace is one privilege of the group above it'
+        );
+        $test->expect(
+            !\array_key_exists('presentations', $privileges),
+            'and not a group of its own'
+        );
 
         return $test->results();
     }

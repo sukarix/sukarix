@@ -17,9 +17,9 @@ class PrivilegeUtils
     /**
      * Privileges grouped by action namespace, each group's actions sorted.
      *
-     * @param string $directory  directory the action classes live in
-     * @param string $namespace  namespace those classes are rooted at
-     * @param string $traitName  trait an action carries to declare a privilege
+     * @param string $directory directory the action classes live in
+     * @param string $namespace namespace those classes are rooted at
+     * @param string $traitName trait an action carries to declare a privilege
      *
      * @return array<string, list<string>>
      */
@@ -37,13 +37,15 @@ class PrivilegeUtils
                 continue;
             }
 
-            $parts = explode('\\', $action);
-            $name  = array_pop($parts);
-            $group = array_pop($parts);
+            // The privilege is the first two segments below the root, so several
+            // classes nested deeper share one: a resource in its own namespace has
+            // an index, an add and a delete, and they are one privilege together.
+            $parts = explode('\\', mb_substr($action, mb_strlen($namespace) + 1));
+            if (\count($parts) < 2) {
+                continue;
+            }
 
-            // Several classes can share one privilege: a resource in its own
-            // namespace has an index, an add and a delete.
-            $privileges[$f3->snakecase($group)][$f3->snakecase($name)] = true;
+            $privileges[$f3->snakecase($parts[0])][$f3->snakecase($parts[1])] = true;
         }
 
         foreach ($privileges as $group => $actions) {
