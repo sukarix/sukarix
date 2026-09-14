@@ -246,6 +246,18 @@ class Session extends Tailored implements SessionInterface
         if ('CACHE' === $table) {
             $this->internalSession = new F3Session($sessionCallback, $key);
         } else {
+            if (null === $db) {
+                // Without this the null reaches DB\SQL\Session and surfaces as a
+                // TypeError from inside Fat-Free, several frames away from the
+                // boot order that actually caused it.
+                throw new \LogicException(\sprintf(
+                    'Session table "%s" needs a database connection, but none was registered yet. '
+                    . 'Boot::prepareSession() must run after createDatabaseConnection(), and no Helper or '
+                    . 'action may be constructed before it, since building one resolves the session.',
+                    $table
+                ));
+            }
+
             $this->internalSession = new SQLSession($db, $table, $force, $sessionCallback, $key);
         }
 

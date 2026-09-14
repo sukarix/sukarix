@@ -6,6 +6,7 @@ namespace Suite;
 
 use Core\InjectorTest;
 use Core\ResponseTest;
+use Core\SessionBootstrapTest;
 use Core\SessionContractTest;
 use Core\SessionCsrfTest;
 use Core\CapabilityTokenTest;
@@ -33,6 +34,7 @@ final class CoreTest extends TestGroup
         ResponseTest::class,
         SessionCsrfTest::class,
         SessionContractTest::class,
+        SessionBootstrapTest::class,
         CapabilityTokenTest::class,
         CorsTest::class,
         EnvironmentOverrideTest::class,
