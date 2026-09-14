@@ -21,7 +21,9 @@ final class ModelCleanupTest extends Scenario
         $model = new class extends Model {
             public bool $updated = false;
 
-            public function fields(): array
+            // Answered here so the callback never reaches the mapper, which a model
+            // built without a database does not have.
+            public function fields(array $fields = [], $exclude = false): array
             {
                 return ['updated_on'];
             }
