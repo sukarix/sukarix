@@ -55,10 +55,8 @@ AI-generated contributions are welcome and should follow the same conventions as
 
 ## Commits
 
-One logical change per commit.
+One logical change per commit, described in a single-line subject: no body, no `Co-Authored-By` or other trailers.
 
 ```
-<description>
-
-Co-Authored-By: Devin
+Add request-id correlation and structured JSON logging
 ```
