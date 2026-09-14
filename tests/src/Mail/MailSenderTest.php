@@ -102,6 +102,30 @@ final class MailSenderTest extends Scenario
         return $test->results();
     }
 
+    public function testTheDebuggerNameCanBeSet($f3)
+    {
+        $f3->set('LOGS', 'tmp/');
+        $f3->set('mailer.smtp.host', 'does-not-exist.invalid');
+        $f3->set('debug.email', 'devops@example.org');
+        $f3->set('mailer.debugger_name', 'BBBEasy Debugger');
+
+        foreach (glob($f3->get('ROOT') . '/' . $f3->get('LOGS') . 'email-sent-*') as $stale) {
+            unlink($stale);
+        }
+
+        $this->newSender()->sendExceptionEmail(new \RuntimeException('named failure'));
+
+        $test = $this->newTest();
+        $test->expect('BBBEasy Debugger' === $f3->get('mailer.from_name'), 'the report is sent under the configured name');
+
+        $f3->clear('mailer.debugger_name');
+        foreach (glob($f3->get('ROOT') . '/' . $f3->get('LOGS') . 'email-sent-*') as $mark) {
+            unlink($mark);
+        }
+
+        return $test->results();
+    }
+
     /**
      * A sender whose transport records what it was asked to do.
      */

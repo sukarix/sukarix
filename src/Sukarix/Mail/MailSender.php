@@ -43,10 +43,14 @@ class MailSender extends Tailored
         $lastSent     = is_file($mailSentPath) ? (int) filemtime($mailSentPath) : 0;
 
         if ($lastSent + $snooze < time() && false !== file_put_contents($mailSentPath, 'sent')) {
-            $this->f3->set('mailer.from_name', 'Application Debugger');
+            // Named after the application when it says so, so the report is
+            // recognisable in an inbox that receives several.
+            $debugger = (string) ($this->f3->get('mailer.debugger_name') ?: 'Application Debugger');
+
+            $this->f3->set('mailer.from_name', $debugger);
             $subject = 'PHP: An error occurred on server ' . Environment::getHostName() . " ERROR ID '{$hash}'";
             $message = 'An error occurred on <b>' . Environment::getHostName() . '</b><br />' . nl2br($exception->getTraceAsString());
-            $this->smtpSend(null, $this->f3->get('debug.email'), 'Application Debugger', $subject, $message, $messageId);
+            $this->smtpSend(null, $this->f3->get('debug.email'), $debugger, $subject, $message, $messageId);
         }
     }
 
