@@ -124,6 +124,27 @@ abstract class Model extends Cortex
     }
 
     /**
+     * Add an identifier exclusion to a filter.
+     *
+     * Comparing to a null identifier never matches in SQL, which silently disables
+     * the whole filter: a uniqueness check written that way passes for every record
+     * while one is being created.
+     *
+     * @param mixed $id
+     */
+    public function excludeId(array $filter, $id = null): array
+    {
+        if (null === $id) {
+            return $filter;
+        }
+
+        $filter[0] = '(' . $filter[0] . ') and id != ?';
+        $filter[]  = $id;
+
+        return $filter;
+    }
+
+    /**
      * Magic setter that writes to a DTO buffer when no database is configured.
      *
      * @param mixed $key

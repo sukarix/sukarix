@@ -72,6 +72,40 @@ final class ModelPersistenceTest extends Scenario
         return $test->results();
     }
 
+    public function testExcludeIdDropsTheClauseWithoutAnIdentifier($f3)
+    {
+        $model = $this->newModel();
+
+        $test = $this->newTest();
+        $test->expect(
+            ['lower(name) = ?', 'taken'] === $model->excludeId(['lower(name) = ?', 'taken']),
+            'no identifier leaves the filter untouched'
+        );
+        $test->expect(
+            ['(lower(name) = ?) and id != ?', 'taken', 7] === $model->excludeId(['lower(name) = ?', 'taken'], 7),
+            'an identifier is excluded without breaking the original condition'
+        );
+
+        return $test->results();
+    }
+
+    public function testUniquenessCheckStillMatchesWhileCreating($f3)
+    {
+        $model = $this->newModel();
+        $model->name = 'engineering';
+        $model->save();
+
+        $other = $this->newModel();
+
+        $test = $this->newTest();
+        $test->expect(
+            $other->load($other->excludeId(['lower(name) = ?', 'engineering'])),
+            'the name is reported as taken while creating a record'
+        );
+
+        return $test->results();
+    }
+
     /**
      * A model over a scratch database, created fresh for each scenario.
      */
