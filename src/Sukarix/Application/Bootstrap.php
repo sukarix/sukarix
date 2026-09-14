@@ -130,6 +130,8 @@ class Bootstrap extends Boot
             }];
         }
 
+        $this->maskOrmDeprecations();
+
         // default error pages if site is not being debugged
         if (!$this->isCli && empty($this->debug)) {
             $this->f3->set(
@@ -144,6 +146,25 @@ class Bootstrap extends Boot
                 }
             );
         }
+    }
+
+    /**
+     * Keep a deprecation in the ORM from ending every request.
+     *
+     * ikkez/f3-cortex still calls ReflectionProperty::setAccessible(), which PHP 8.5
+     * deprecates. Both Fat-Free and Tracy force their own error reporting level, so
+     * the mask has to be applied after them, and Tracy would otherwise escalate the
+     * notice into a fatal error on every query. Set orm.mask_deprecations to false
+     * once Cortex is fixed.
+     */
+    protected function maskOrmDeprecations(): void
+    {
+        if (false === $this->f3->get('orm.mask_deprecations')) {
+            return;
+        }
+
+        error_reporting(error_reporting() & ~E_DEPRECATED);
+        Debugger::$scream = false;
     }
 
     protected function loadAppSetting(): void

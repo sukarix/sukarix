@@ -14,6 +14,7 @@ use Core\EnvironmentOverrideTest;
 use Core\ApiActionTest;
 use Core\ModelCleanupTest;
 use Core\ModelPersistenceTest;
+use Core\OrmDeprecationTest;
 use Test\TestGroup;
 
 /**
@@ -36,5 +37,6 @@ final class CoreTest extends TestGroup
         ApiActionTest::class,
         ModelCleanupTest::class,
         ModelPersistenceTest::class,
+        OrmDeprecationTest::class,
     ];
 }
