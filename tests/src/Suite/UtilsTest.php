@@ -6,6 +6,7 @@ namespace Suite;
 
 use Test\TestGroup;
 use Utils\DataUtilsTest;
+use Utils\PrivilegeUtilsTest;
 use Utils\FileSystemUtilsTest;
 
 /**
@@ -19,6 +20,7 @@ final class UtilsTest extends TestGroup
 {
     protected $classes = [
         DataUtilsTest::class,
+        PrivilegeUtilsTest::class,
         FileSystemUtilsTest::class,
     ];
 }
