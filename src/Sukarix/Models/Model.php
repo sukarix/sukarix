@@ -90,6 +90,40 @@ abstract class Model extends Cortex
     }
 
     /**
+     * Reload the record after an insert.
+     *
+     * PostgreSQL identity columns carry no nextval default, so Fat-Free does not
+     * recognise them as auto increment. The reload Cortex runs itself then filters
+     * on the identifier the record had before the insert, matches nothing, and
+     * leaves the whole record blank in memory, defaults included.
+     *
+     * @return mixed
+     */
+    public function insert()
+    {
+        $result = parent::insert();
+
+        $this->reloadAfterInsert();
+
+        return $result;
+    }
+
+    /**
+     * Read the record back when the insert left it blank.
+     */
+    public function reloadAfterInsert(): void
+    {
+        if (null === $this->mapper) {
+            return;
+        }
+
+        $id = $this->mapper->get('_id');
+        if (!$this->valid() && $id) {
+            $this->load(['id = ?', $id]);
+        }
+    }
+
+    /**
      * Magic setter that writes to a DTO buffer when no database is configured.
      *
      * @param mixed $key

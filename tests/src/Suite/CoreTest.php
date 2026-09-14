@@ -11,6 +11,7 @@ use Core\CapabilityTokenTest;
 use Core\CorsTest;
 use Core\ApiActionTest;
 use Core\ModelCleanupTest;
+use Core\ModelPersistenceTest;
 use Test\TestGroup;
 
 /**
@@ -30,5 +31,6 @@ final class CoreTest extends TestGroup
         CorsTest::class,
         ApiActionTest::class,
         ModelCleanupTest::class,
+        ModelPersistenceTest::class,
     ];
 }
